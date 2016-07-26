@@ -1,4 +1,5 @@
 #include <iostream>
+#include <cstdio>
 
 //include libraries
 #pragma comment(lib, "./lib/glew32s.lib")
@@ -15,90 +16,96 @@
 //imgui
 #include "imgui/imgui.h"
 
-//window variables
-const int g_window_width = 800;
-const int g_window_height = 600;
-GLFWwindow* g_window = nullptr;
+// ImGui - standalone example application for Glfw + OpenGL 3, using programmable pipeline
+// If you are new to ImGui, see examples/README.txt and documentation at the top of imgui.cpp.
 
-//GLhandles
-GLint g_shader;
-GLint g_vert;
-GLint g_frag;
+#include "imgui_impl_glfw_gl3.h"
 
-GLint g_uniform_proj;
-GLint g_uniform_tex;
-GLint g_attrib_pos;
-GLint g_attrib_uv;
-GLint g_attrib_col;
-
-
-//shaders
-const GLchar* vertex_shader =
+static void error_callback(int error, const char* description)
 {
-	"	#version 330\n											"
-	"	uniform		mat4	proj_mtx;							"
-	"	in			vec2	position;							"
-	"	in			vec2	uv;									"
-	"	in			vec4	color;								"
-	"	out			vec2	frag_uv;							"
-	"	out			vec4	frag_color;							"
-	"	void main()												"
-	"	{														"
-	"		frag_uv = uv;										"
-	"		frag_color = color;									"
-	"		gl_Position = proj_mtx * vec4(position.xy,0,1);		"
-	"	}														"
-};
-const GLchar* fragment_shader =
-{
-	"	#version 330\n												"
-	"	uniform		sampler2D	tex;								"
-	"	in			vec2		frag_uv;							"
-	"	in			vec4		frag_color;							"
-	"	out			vec4		out_color;							"
-	"	void main()													"
-	"	{															"
-	"		out_color = frag_color * texture( tex, frag_uv.st);		"
-	"	}															"
-};
+	fprintf(stderr, "Error %d: %s\n", error, description);
+}
 
-int main()
+int main(int, char**)
 {
-	//initialise glfw
-	glfwInit();
+	// Setup window
+	glfwSetErrorCallback(error_callback);
+	if (!glfwInit())
+		return 1;
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-	glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
-
-	//set up window
-	g_window = glfwCreateWindow(g_window_width, g_window_height, "renderlib", nullptr, nullptr);
-
-	//initialize glew
-	glewExperimental = GL_TRUE;
+#if __APPLE__
+	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+#endif
+	GLFWwindow* window = glfwCreateWindow(1280, 720, "ImGui OpenGL3 example", NULL, NULL);
+	glfwMakeContextCurrent(window);
 	glewInit();
 
-	glViewport(0, 0, g_window_width, g_window_height);
+	// Setup ImGui binding
+	ImGui_ImplGlfwGL3_Init(window, true);
 
-	//compile shaders
-	g_shader = glCreateProgram();
-	g_vert = glCreateShader(GL_VERTEX_SHADER);
-	g_frag = glCreateShader(GL_FRAGMENT_SHADER);
-	glShaderSource(g_vert, 1, &vertex_shader, 0);
-	glShaderSource(g_frag, 1, &fragment_shader, 0);
-	glCompileShader(g_vert);
-	glCompileShader(g_frag);
-	glAttachShader(g_shader, g_vert);
-	glAttachShader(g_shader, g_frag);
-	glLinkProgram(g_shader);
+	// Load Fonts
+	// (there is a default font, this is only if you want to change it. see extra_fonts/README.txt for more details)
+	//ImGuiIO& io = ImGui::GetIO();
+	//io.Fonts->AddFontDefault();
+	//io.Fonts->AddFontFromFileTTF("../../extra_fonts/Cousine-Regular.ttf", 15.0f);
+	//io.Fonts->AddFontFromFileTTF("../../extra_fonts/DroidSans.ttf", 16.0f);
+	//io.Fonts->AddFontFromFileTTF("../../extra_fonts/ProggyClean.ttf", 13.0f);
+	//io.Fonts->AddFontFromFileTTF("../../extra_fonts/ProggyTiny.ttf", 10.0f);
+	//io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
 
-	//set up uniforms and attributes;
-	g_uniform_proj = glGetUniformLocation(g_shader, "proj_mtx");
-	g_uniform_tex = glGetUniformLocation(g_shader, "tex");
-	g_attrib_pos = glGetAttribLocation(g_shader, "position");
-	g_attrib_uv = glGetAttribLocation(g_shader, "uv");
-	g_attrib_col = glGetAttribLocation(g_shader, "color");
+	bool show_test_window = true;
+	bool show_another_window = false;
+	ImVec4 clear_color = ImColor(114, 144, 154);
 
+	// Main loop
+	while (!glfwWindowShouldClose(window))
+	{
+		glfwPollEvents();
+		ImGui_ImplGlfwGL3_NewFrame();
 
+		// 1. Show a simple window
+		// Tip: if we don't call ImGui::Begin()/ImGui::End() the widgets appears in a window automatically called "Debug"
+		{
+			static float f = 0.0f;
+			ImGui::Text("Hello, world!");
+			ImGui::SliderFloat("float", &f, 0.0f, 1.0f);
+			ImGui::ColorEdit3("clear color", (float*)&clear_color);
+			if (ImGui::Button("Test Window")) show_test_window ^= 1;
+			if (ImGui::Button("Another Window")) show_another_window ^= 1;
+			ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+		}
 
+		// 2. Show another simple window, this time using an explicit Begin/End pair
+		if (show_another_window)
+		{
+			ImGui::SetNextWindowSize(ImVec2(200, 100), ImGuiSetCond_FirstUseEver);
+			ImGui::Begin("Another Window", &show_another_window);
+			ImGui::Text("Hello");
+			ImGui::End();
+		}
+
+		// 3. Show the ImGui test window. Most of the sample code is in ImGui::ShowTestWindow()
+		if (show_test_window)
+		{
+			ImGui::SetNextWindowPos(ImVec2(650, 20), ImGuiSetCond_FirstUseEver);
+			ImGui::ShowTestWindow(&show_test_window);
+		}
+
+		// Rendering
+		int display_w, display_h;
+		glfwGetFramebufferSize(window, &display_w, &display_h);
+		glViewport(0, 0, display_w, display_h);
+		glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
+		glClear(GL_COLOR_BUFFER_BIT);
+		ImGui::Render();
+		glfwSwapBuffers(window);
+	}
+
+	// Cleanup
+	ImGui_ImplGlfwGL3_Shutdown();
+	glfwTerminate();
+
+	return 0;
 }
