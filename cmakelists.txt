@@ -1,0 +1,14 @@
+cmake_minimum_required(VERSION 2.6)
+
+set(PROJECT_NAME renderlib)
+
+project(${PROJECT_NAME})
+set(CMAKE_BUILD_TYPE Release)
+set(CMAKE_USE_RELATIVE_PATHS)
+
+
+include_directories(./renderlib/imgui ./renderlib/GL ./renderlib/GLFW)
+
+file(GLOB SOURCE_FILES "./renderlib/*.cpp")
+
+add_executable(${PROJECT_NAME} ${SOURCE_FILES})
