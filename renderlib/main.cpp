@@ -141,16 +141,20 @@ int main(int, char**)
 			};
 			static int func_type = 0, display_count = 70;
 			ImGui::Separator();
+			
 			ImGui::PushItemWidth(100); 
 			{
 				ImGui::Combo("func", &func_type, "Sin\0Saw\0");
 			}
 			ImGui::PopItemWidth();
+
 			ImGui::SameLine();
+
 			ImGui::SliderInt("Sample count", &display_count, 1, 500);
 			float (*func)(void*, int) = (func_type == 0) ? Funcs::Sin : Funcs::Saw;
 			ImGui::PlotLines("Lines", func, NULL, display_count, 0, NULL, -1.0f, 1.0f, ImVec2(0,80));
 			ImGui::PlotHistogram("Histogram", func, NULL, display_count, 0, NULL, -1.0f, 1.0f, ImVec2(0,80));
+
 			ImGui::Separator();
 
 			// Animate a simple progress bar
