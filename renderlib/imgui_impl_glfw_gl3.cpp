@@ -7,21 +7,21 @@
 // If you are new to ImGui, see examples/README.txt and documentation at the top of imgui.cpp.
 // https://github.com/ocornut/imgui
 
-#pragma comment(lib, "./lib/glew32s.lib")
-#pragma comment(lib, "./lib/glfw3.lib")
-#pragma comment(lib, "opengl32.lib")
-
-#include "imgui/imgui.h"
+//#pragma comment(lib, "./lib/glew32s.lib")
+//#pragma comment(lib, "./lib/glfw3.lib")
+//#pragma comment(lib, "opengl32.lib")
+//
+#include <imgui.h>
 #include "imgui_impl_glfw_gl3.h"
 
 // GL3W/GLFW
-#include "GL/glew.h"
-#include "GLFW/glfw3.h"
+#include <glew.h>
+#include <glfw3.h>
 #ifdef _WIN32
 #undef APIENTRY
 #define GLFW_EXPOSE_NATIVE_WIN32
 #define GLFW_EXPOSE_NATIVE_WGL
-#include "GLFW/glfw3native.h"
+#include <glfw3native.h>
 #endif
 
 // Data

@@ -3,12 +3,25 @@ cmake_minimum_required(VERSION 2.6)
 set(PROJECT_NAME renderlib)
 
 project(${PROJECT_NAME})
-set(CMAKE_BUILD_TYPE Release)
+#set(CMAKE_BUILD_TYPE Release)
 set(CMAKE_USE_RELATIVE_PATHS)
 
-
-include_directories(./renderlib/imgui ./renderlib/GL ./renderlib/GLFW)
-
-file(GLOB SOURCE_FILES "./renderlib/*.cpp")
-
+file(GLOB SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/renderlib/*.cpp")
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})
+
+target_include_directories(${PROJECT_NAME} PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/renderlib/imgui")
+target_include_directories(${PROJECT_NAME} PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/renderlib/GL")
+target_include_directories(${PROJECT_NAME} PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/renderlib/GLFW")
+
+#find_library finds an external library and links it
+#find_library(GRAPHICS_LIBS NAMES "glew32s.lib" "glfw3.lib" HINTS "./renderlib/lib")
+#target_link_libraries(${PROJECT_NAME} ${GRAPHICS_LIBS} "opengl32")
+#link_directories("./renderlib/lib")
+
+#cmake_policy(SET CMP0015 NEW)
+#link_directories(./renderlib/lib)
+#find_library(LIB_GLEW glew32s NO_DEFAULT_PATH)
+#find_library(LIB_GLFW glfw3 NO_DEFAULT_PATH)
+#target_link_libraries(${PROJECT_NAME} ${LIB_GLEW} ${LIB_GLFW} "opengl32")
+
+target_link_libraries(${PROJECT_NAME} "./renderlib/lib/glew32s" "./renderlib/lib/glfw3" "opengl32")

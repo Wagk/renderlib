@@ -1,20 +1,20 @@
 #include <iostream>
 #include <cstdio>
 
-//include libraries
-#pragma comment(lib, "./lib/glew32s.lib")
-#pragma comment(lib, "./lib/glfw3.lib")
-#pragma comment(lib, "opengl32.lib")
+////include libraries
+//#pragma comment(lib, "./lib/glew32s.lib")
+//#pragma comment(lib, "./lib/glfw3.lib")
+//#pragma comment(lib, "opengl32.lib")
 
 // GLEW
 #define GLEW_STATIC
-#include "GL/glew.h"
+#include <glew.h>
 
 // GLFW
-#include "GLFW/glfw3.h"
+#include <glfw3.h>
 
 //imgui
-#include "imgui/imgui.h"
+#include <imgui.h>
 
 // ImGui - standalone example application for Glfw + OpenGL 3, using programmable pipeline
 // If you are new to ImGui, see examples/README.txt and documentation at the top of imgui.cpp.
