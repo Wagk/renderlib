@@ -4,6 +4,13 @@ namespace io
 {
 	namespace wav
 	{
+		const int WAVE_LABEL_SIZE = 4; //!<the size of a wav header label tag 
+		const int WAVE_HEADER_SIZE = 44; //!< the size of a wav file header
+		const int AUDIO_FORMAT = 1; //!< the only permissible audio format
+		const int MAX_CHANNELS = 2; //!< the maximum permissible number of channels
+		const int MAX_SAMPLE = 16; //!< The maximum permissable sample size
+
+
 		namespace
 		{
 			int file_size(const std::string& file)
@@ -22,11 +29,6 @@ namespace io
 			}
 
 		}
-
-		const std::string riff_cmp = "RIFF";
-		const std::string wave_cmp = "WAVE";
-		const std::string fmt_cmp = "fmt ";
-		const std::string data_cmp = "data";
 
 		std::pair<file, status> LoadWAV(const std::string & filepath)
 		{
@@ -50,7 +52,7 @@ namespace io
 				std::memcmp(wav_header.subchunk2_id, "data", 4) ||
 				wav_header.audio_format != AUDIO_FORMAT ||
 				wav_header.num_channels > MAX_CHANNELS ||
-				wav_header.bits_per_sample != MAX_SAMPLE ||
+				wav_header.bits_per_sample > MAX_SAMPLE ||
 				wav_header.subchunk2_size != wav_header.chunk_size - sizeof(header) + sizeof(unsigned int) + 4
 				)
 			{
@@ -75,7 +77,7 @@ namespace io
 
 			for (size_t i = 0; i < wav_header.subchunk2_size; ++i)
 			{
-				wav.read(&wav_data.data[i], sizeof(short));
+				wav.read(reinterpret_cast<char*>(&wav_data[i]), sizeof(short));
 			}
 
 			file wav_file;
@@ -90,7 +92,7 @@ namespace io
 			std::ofstream ofs(path, std::ofstream::binary);
 
 			ofs.write(reinterpret_cast<const char*>(&wav.m_header), sizeof header);
-			ofs.write(reinterpret_cast<const char*>(wav.m_data.data()), sizeof(short) * wav.m_data.size());
+			ofs.write(reinterpret_cast<const char*>(wav.m_data.data()), wav.m_header.subchunk2_size);
 		}
 
 	}

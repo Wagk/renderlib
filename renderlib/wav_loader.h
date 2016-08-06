@@ -9,17 +9,6 @@ namespace io
 	namespace wav
 	{
 
-		const int WAVE_LABEL_SIZE = 4; //!<the size of a wav header label tag 
-		const int WAVE_HEADER_SIZE = 44; //!< the size of a wav file header
-		const int AUDIO_FORMAT = 1; //!< the only permissible audio format
-		const int MAX_CHANNELS = 2; //!< the maximum permissible number of channels
-		const int MAX_SAMPLE = 16; //!< The maximum permissable sample size
-
-		std::string riff_cmp = "RIFF";
-		std::string wave_cmp = "WAVE";
-		std::string fmt_cmp = "fmt ";
-		std::string data_cmp = "data";
-
 		//establish the waveheader format
 		//http://soundfile.sapp.org/doc/WaveFormat/
 		struct header
@@ -36,8 +25,8 @@ namespace io
 			unsigned short num_channels;
 			unsigned int sample_rate;
 			unsigned int byte_rate;
+			unsigned short block_align; // == NumChannels * BitsPerSample/8
 			unsigned short bits_per_sample;
-			unsigned short block_align;
 
 			//data subchunk
 			char subchunk2_id[4];

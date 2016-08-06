@@ -68,15 +68,15 @@ static void sys_init()
 int main(int, char**)
 {
 
-	auto load = io::wav::LoadWAV("test.wav");
-	if (load.second != io::wav::WAV_GOOD)
-	{
-		return -1;
-	}
-	else
-	{
-		io::wav::SaveWAV("test2.wav", load.first);
-	}
+	//auto load = io::wav::LoadWAV("test.wav");
+	//if (load.second != io::wav::WAV_GOOD)
+	//{
+	//	return -1;
+	//}
+	//else
+	//{
+	//	io::wav::SaveWAV("test2.wav", load.first);
+	//}
 
 
 
