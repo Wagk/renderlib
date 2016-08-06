@@ -21,6 +21,9 @@
 
 #include "imgui_impl_glfw_gl3.h"
 
+
+#include "wav_loader.h"
+
 #define IM_ARRAYSIZE(_ARR)  ((int)(sizeof(_ARR)/sizeof(*_ARR)))
 
 GLFWwindow* g_context = nullptr;
@@ -64,6 +67,19 @@ static void sys_init()
 
 int main(int, char**)
 {
+
+	auto sound_data = io::wav::LoadWAV("test.wav");
+	if (sound_data.second != io::wav::WAV_GOOD)
+	{
+		return -1;
+	}
+	else
+	{
+		//io::wav::SaveWAV("test2.wav", load.first);
+	}
+	auto pair_data = io::wav::FloatChannel(sound_data.first);
+
+
 
 	sys_init();
 
@@ -128,9 +144,13 @@ int main(int, char**)
 					phase += 0.10f*values_offset;
 				}
 			}
-			ImGui::PlotLines("Lines", values, IM_ARRAYSIZE(values), values_offset, "avg 0.0", -1.0f, 1.0f, ImVec2(0,80));
-			ImGui::PlotHistogram("Histogram", arr, IM_ARRAYSIZE(arr), 0, NULL, 0.0f, 1.0f, ImVec2(0,80));
 
+			
+			//ImGui::PlotLines("Lines", values, IM_ARRAYSIZE(values), values_offset, "avg 0.0", -1.0f, 1.0f, ImVec2(0,80));
+			//ImGui::PlotHistogram("Histogram", arr, IM_ARRAYSIZE(arr), 0, NULL, 0.0f, 1.0f, ImVec2(0,80));
+
+			ImGui::PlotLines("CS225 Wav Sample", pair_data.data(), pair_data.size(), 0, "avg 0.0", -150.0f, 150.0f, ImVec2(0,80));
+			ImGui::PlotHistogram("Histogram", arr, IM_ARRAYSIZE(arr), 0, NULL, 0.0f, 1.0f, ImVec2(0,80));
 
 			// Use functions to generate output
 			// FIXME: This is rather awkward because current plot API only pass in indices. We probably want an API passing floats and user provide sample rate/count.

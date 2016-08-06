@@ -75,6 +75,7 @@
     <ClCompile Include="imgui\imgui_draw.cpp" />
     <ClCompile Include="imgui_impl_glfw_gl3.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="wav_loader.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="fft_impl.h" />
@@ -91,6 +92,7 @@
     <ClInclude Include="imgui\stb_textedit.h" />
     <ClInclude Include="imgui\stb_truetype.h" />
     <ClInclude Include="imgui_impl_glfw_gl3.h" />
+    <ClInclude Include="wav_loader.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
