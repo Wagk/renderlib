@@ -49,5 +49,7 @@ namespace io
 		std::pair<file, status> LoadWAV(const std::string& filepath);
 		void SaveWAV(const std::string& filepath, const file& wav);
 
+		std::pair<std::vector<float>, std::vector<float>> SplitChannels(const file& file);
+		std::vector<float> FloatChannel(const file& file);
 	}
 } //

@@ -95,5 +95,53 @@ namespace io
 			ofs.write(reinterpret_cast<const char*>(wav.m_data.data()), wav.m_header.subchunk2_size);
 		}
 
+		std::pair<std::vector<float>, std::vector<float>> SplitChannels(const file & file)
+		{
+			union splitter
+			{
+				char pair[2] = { 0 };
+				short val;
+			};
+
+			std::vector<float> left; left.reserve(file.m_data.size());
+			std::vector<float> right; right.reserve(left.capacity());
+
+			for (short piece : file.m_data)
+			{
+				splitter split;
+
+				split.val = piece;
+				
+				left.push_back(split.pair[0]);
+				right.push_back(split.pair[1]);
+			}
+
+			return std::make_pair(left, right);
+		}
+
+		std::vector<float> FloatChannel(const file & file)
+		{
+			union splitter
+			{
+				char pair[2] = { 0 };
+				short val;
+			};
+
+			std::vector<float> data;
+			data.reserve(file.m_data.size());
+
+			for (short elem : file.m_data)
+			{
+				splitter split;
+
+				split.val = elem;
+
+				data.push_back(split.val);
+				//data.push_back(split.pair[1]);
+			}
+
+			return data;
+		}
+
 	}
 }
