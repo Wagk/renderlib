@@ -21,6 +21,9 @@
 
 #include "imgui_impl_glfw_gl3.h"
 
+
+#include "wav_loader.h"
+
 #define IM_ARRAYSIZE(_ARR)  ((int)(sizeof(_ARR)/sizeof(*_ARR)))
 
 GLFWwindow* g_context = nullptr;
@@ -64,6 +67,19 @@ static void sys_init()
 
 int main(int, char**)
 {
+
+	auto load = io::wav::LoadWAV("test.wav");
+	if (load.second != io::wav::WAV_GOOD)
+	{
+		return -1;
+	}
+	else
+	{
+		io::wav::SaveWAV("test2.wav", load.first);
+	}
+
+
+
 
 	sys_init();
 
