@@ -12,7 +12,7 @@ namespace io
 		const int WAVE_LABEL_SIZE = 4; //!<the size of a wav header label tag 
 		const int WAVE_HEADER_SIZE = 44; //!< the size of a wav file header
 		const int AUDIO_FORMAT = 1; //!< the only permissible audio format
-		const int MAX_CHANNELS = 2; //!< the maximum permissible number of channels
+		const int MAX_CHANNELS = 1; //!< the maximum permissible number of channels
 		const int MAX_SAMPLE = 16; //!< The maximum permissable sample size
 
 								   /*changes here*/
@@ -78,6 +78,7 @@ namespace io
 			return result(std::move(wav_file), WAV_GOOD);
 		}
 
+		//TODO: some way to validate the headers
 		void SaveWAV(const std::string& path, const file& wav)
 		{
 			std::ofstream ofs(path, std::ofstream::binary);
@@ -112,36 +113,20 @@ namespace io
 
 		sample ToSample(const file & file)
 		{
-			union splitter
-			{
-				char pair[2] = { 0 };
-				short val;
-			};
-
 			std::vector<float> data(file.m_data.size());
-
-			//const auto file_minmax = std::minmax_element(file.m_data.begin(), file.m_data.end());
 
 			float max_val = FLT_MIN;
 			float min_val = FLT_MAX;
 
 			for (size_t i = 0; i < file.m_data.size(); ++i)
 			{
-				splitter split;
-
-				//std::cout << << std::endl;
-
-	/*			split.val = file.m_data[i];
-
-				data[i] = static_cast<float>(split.);*/
-
 				max_val = max(max_val, file.m_data[i]);
 				min_val = min(min_val, file.m_data[i]);
 
 				data[i] = static_cast<float>(file.m_data[i]);
 			}
 
-			float range = USHRT_MAX;//max_val - min_val;
+			float range = USHRT_MAX;
 
 			std::for_each(data.begin(), data.end(), [range, min_val](auto& val) { val = ((val - min_val) / range) * 2 - 1; });
 

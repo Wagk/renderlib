@@ -27,6 +27,7 @@
 
 
 #include "wav_loader.h"
+#include "LowHighPassFilter.h"
 
 #define IM_ARRAYSIZE(_ARR)  ((int)(sizeof(_ARR)/sizeof(*_ARR)))
 
@@ -119,12 +120,25 @@ int main(int argc, char* argv[])
 	//globals for button
 	bool playsound = false;
 	std::string playbuttonTxt = "play";
+	float skipval = 0;
+	float delta_t = 0.f;
+	float time_prev = 0.f;
+	float time_now = 0.f;
+
+
+
+
+
 
 	// Main loop
 	while (!glfwWindowShouldClose(g_context))
 	{
 		glfwPollEvents();
 		ImGui_ImplGlfwGL3_NewFrame();
+		time_prev = time_now;
+		time_now = ImGui::GetTime();
+		delta_t = time_now - time_prev;
+		skipval += 0.5f;// 1 / 60.f;// delta_t;
 
 		//// 1. Show a simple window
 		//// Tip: if we don't call ImGui::Begin()/ImGui::End() the widgets appears in a window automatically called "Debug"
@@ -160,8 +174,6 @@ int main(int argc, char* argv[])
 			/*changes here*/
 			if (ImGui::Button(playbuttonTxt.c_str(), ImVec2(50, 50)))
 			{
-
-
 				if (playbuttonTxt == "play")
 				{
 					io::wav::PlayWavFile("test.wav", true);
@@ -172,17 +184,15 @@ int main(int argc, char* argv[])
 					io::wav::PlayWavFile("test.wav", false);
 
 				}
-
-
 			}
 			/*to here*/
 
 
 			//stuff inside
 			bool animate = true;
-			ImGui::Checkbox("Animate", &animate);
+			//ImGui::Checkbox("Animate", &animate);
 			static float arr[] = { 0.6f, 0.1f, 1.0f, 0.5f, 0.92f, 0.1f, 0.2f };
-			ImGui::PlotLines("Frame Times", arr, IM_ARRAYSIZE(arr));
+			//ImGui::PlotLines("Frame Times", arr, IM_ARRAYSIZE(arr));
 
 
 			static float values[90] = { 0 };
@@ -190,31 +200,33 @@ int main(int argc, char* argv[])
 			if (animate)
 			{
 				static float refresh_time = ImGui::GetTime(); // Create dummy data at fixed 60 hz rate for the demo
-				for (; ImGui::GetTime() > refresh_time + 1.0f/60.0f; refresh_time += 1.0f/60.0f)
+				for (; ImGui::GetTime() > refresh_time + 1.0f / 60.0f; refresh_time += 1.0f / 60.0f)
 				{
 					static float phase = 0.0f;
 					values[values_offset] = cosf(phase);
-					values_offset = (values_offset+1) % IM_ARRAYSIZE(values);
+					values_offset = (values_offset + 1) % IM_ARRAYSIZE(values);
 					phase += 0.10f*values_offset;
 				}
 			}
 
-			
-			//ImGui::PlotLines("Lines", values, IM_ARRAYSIZE(values), values_offset, "avg 0.0", -1.0f, 1.0f, ImVec2(0,80));
+
+			//ImGui::PlotLines("Lines", values, IM_ARRAYSIZE(values), values_offset, "avg 0.0", -1.0f, 1.0f, ImVec2(0, 80));
 			//ImGui::PlotHistogram("Histogram", arr, IM_ARRAYSIZE(arr), 0, NULL, 0.0f, 1.0f, ImVec2(0,80));
 
-			ImGui::PlotLines("CS225 Wav Sample", pair_data.m_samples.data(), pair_data.m_samples.size() / 2 , 0, "", -1.0f, 1.0f, ImVec2(0, 100), 4);
-			/*ImGui::PlotLines(
-				"CS225 Wav Sample",
-				sin_data.data(),sin_data.size() / 2,
-				0,
-				"",
-				-1.0f, 1.0f,
-				ImVec2(0, 80),
-				4
-			);*/
+			
 
-			ImGui::PlotHistogram("Float value Histogram", pair_data.m_samples.data(), pair_data.m_samples.size()/2, 0, NULL, 0.0f, 1.0f, ImVec2(0,100));
+			ImGui::PlotLines("Entire Waveform", pair_data.m_samples.data(), pair_data.m_samples.size() / 2, 0, "", -1.0f, 1.0f, ImVec2(0, 100), 4);
+
+			const int view_buffer_size = 90;
+			float view_buffer[view_buffer_size] = { 0 };
+			for (int i = 0; i < view_buffer_size; ++i)
+			{
+				view_buffer[i] = pair_data.m_samples[(i + (int)skipval) % pair_data.m_samples.size()];
+			} 
+
+			ImGui::PlotLines("Dynamic Waveform", view_buffer, view_buffer_size, 0, "", -1.0f, 1.0f, ImVec2(0, 100), 4);
+
+			ImGui::PlotHistogram("Float value Histogram", pair_data.m_samples.data(), pair_data.m_samples.size() / 2, 0, NULL, 0.0f, 1.0f, ImVec2(0, 100));
 
 			// Use functions to generate output
 			// FIXME: This is rather awkward because current plot API only pass in indices. We probably want an API passing floats and user provide sample rate/count.
@@ -225,8 +237,8 @@ int main(int argc, char* argv[])
 			};
 			static int func_type = 0, display_count = 70;
 			ImGui::Separator();
-			
-			ImGui::PushItemWidth(100); 
+
+			ImGui::PushItemWidth(100);
 			{
 				ImGui::Combo("func", &func_type, "Sin\0Saw\0");
 			}
@@ -234,10 +246,10 @@ int main(int argc, char* argv[])
 
 			ImGui::SameLine();
 
-			ImGui::SliderInt("Sample count", &display_count, 1, 500);
-			float (*func)(void*, int) = (func_type == 0) ? Funcs::Sin : Funcs::Saw;
-			ImGui::PlotLines("Lines", func, NULL, display_count, 0, NULL, -1.0f, 1.0f, ImVec2(0,80));
-			ImGui::PlotHistogram("Histogram", func, NULL, display_count, 0, NULL, -1.0f, 1.0f, ImVec2(0,80));
+			//ImGui::SliderInt("Sample count", &display_count, 1, 500);
+			float(*func)(void*, int) = (func_type == 0) ? Funcs::Sin : Funcs::Saw;
+			//ImGui::PlotLines("Lines", func, NULL, display_count, 0, NULL, -1.0f, 1.0f, ImVec2(0,80));
+			//ImGui::PlotHistogram("Histogram", func, NULL, display_count, 0, NULL, -1.0f, 1.0f, ImVec2(0,80));
 
 			ImGui::Separator();
 
@@ -251,36 +263,43 @@ int main(int argc, char* argv[])
 			}
 
 			// Typically we would use ImVec2(-1.0f,0.0f) to use all available width, or ImVec2(width,0.0f) for a specified width. ImVec2(0.0f,0.0f) uses ItemWidth.
-			ImGui::ProgressBar(progress, ImVec2(0.0f,0.0f));
-			ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
-			ImGui::Text("Progress Bar");
+			//ImGui::ProgressBar(progress, ImVec2(0.0f,0.0f));
+			//ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
+			//ImGui::Text("Progress Bar");
 
 			float progress_saturated = (progress < 0.0f) ? 0.0f : (progress > 1.0f) ? 1.0f : progress;
 			char buf[32];
-			sprintf(buf, "%d/%d", (int)(progress_saturated*1753), 1753);
-			ImGui::ProgressBar(progress, ImVec2(0.f,0.f), buf);
-			}
-			ImGui::End();
+			sprintf(buf, "%d/%d", (int)(progress_saturated * 1753), 1753);
+			//ImGui::ProgressBar(progress, ImVec2(0.f,0.f), buf);
+		}
+		ImGui::End();
 
-			/*changes here*/
-			io::wav::UpdateWavFileStatus("test.wav");
-			std::string curWavFileStatus = io::wav::globalWavState;
-			if (curWavFileStatus == "stopped")
-				playbuttonTxt = "play";
-			else if (curWavFileStatus == "playing")
-				playbuttonTxt = "pause";
-			else if (curWavFileStatus == "paused")
-				playbuttonTxt = "play";
-			/*to here*/
+		/*changes here*/
+		io::wav::UpdateWavFileStatus("test.wav");
+		std::string curWavFileStatus = io::wav::globalWavState;
+		if (curWavFileStatus == "stopped")
+		{
+			playbuttonTxt = "play";
+		}
+		else if (curWavFileStatus == "playing")
+		{
+			playbuttonTxt = "pause";
+		}
+		else if (curWavFileStatus == "paused")
+		{
+			playbuttonTxt = "play";
+		}
+		/*to here*/
 
-			// Rendering
-			int display_w, display_h;
-			glfwGetFramebufferSize(g_context, &display_w, &display_h);
-			glViewport(0, 0, display_w, display_h);
-			glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
-			glClear(GL_COLOR_BUFFER_BIT);
-			ImGui::Render();
-			glfwSwapBuffers(g_context);
+		// Rendering
+		int display_w, display_h;
+		glfwGetFramebufferSize(g_context, &display_w, &display_h);
+		glViewport(0, 0, display_w, display_h);
+		glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
+		glClear(GL_COLOR_BUFFER_BIT);
+		ImGui::Render();
+		glfwSwapBuffers(g_context);
+
 	}
 
 	// Cleanup
