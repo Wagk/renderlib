@@ -1,4 +1,5 @@
 #pragma once
+// Note: This file is literally RealFFTf.h/.cpp by Audacity!!
 
 #define fft_type float
 struct FFTParam {

@@ -255,6 +255,34 @@ void SignalAnalyst::PowerSpectrum(int n, float* in, float* out)
 	delete[] imagOut;
 }
 
+void SignalAnalyst::EPowerSpectrum(int n, float* in, float* out)
+{
+	int i;
+	HFFT hFFT = Experimental::GetFFT(n);
+	float *pFFT = new float[n];
+
+	// Copy the data into the processing buffer
+	for (i = 0; i < n; ++i)
+		pFFT[i] = in[i];
+
+	// Perform the FFT
+	Experimental::RealFFT(pFFT, hFFT);
+
+	// Copy the data into the real and imaginary outputs
+	for (i = 1; i < n / 2; ++i)
+	{
+		out[i] = (pFFT[hFFT->BitReversed[i]] * pFFT[hFFT->BitReversed[i]])
+				+ (pFFT[hFFT->BitReversed[i] + 1] * pFFT[hFFT->BitReversed[i] + 1]);
+	}
+
+	// Handle the (real-only) DC and Fs/2 bins
+	out[0] = pFFT[0] * pFFT[0];
+	out[i] = pFFT[1] * pFFT[1];
+	delete[] pFFT;
+
+	Experimental::ReleaseFFT(hFFT);
+}
+
 WindowFuncPtr SignalAnalyst::GetWindowFunction(const WindowTypeFunctions& type)
 {
 	switch (type)
@@ -344,7 +372,7 @@ void SignalAnalyst::ComputePlot()
 		for (int i = 0; i < st_WinSize; ++i)
 			in[i] = win[i] * st_Data[start + i];
 
-		PowerSpectrum(st_WinSize, in, out);
+		EPowerSpectrum(st_WinSize, in, out);
 
 		for (int i = 0; i < half; ++i)
 			st_Processed[i] += out[i];

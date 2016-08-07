@@ -34,6 +34,7 @@ public:
 	static void ERealIFFT(int n, float* realIn, float* imagIn, float* realOut);
 
 	static void PowerSpectrum(int n, float* in, float* out);
+	static void EPowerSpectrum(int n, float* in, float* out);
 
 	static WindowFuncPtr GetWindowFunction(const WindowTypeFunctions& type);
 
