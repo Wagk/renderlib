@@ -27,6 +27,7 @@
 
 
 #include "wav_loader.h"
+#include "fft_impl.h"
 #include "LowHighPassFilter.h"
 #include "Compressor.h"
 #include "our_fft.h"
@@ -125,7 +126,16 @@ int main(int argc, char* argv[])
 		shortvec.push_back(elem);
 	}
 
+	const unsigned windowSize = 2048;
 
+	SignalAnalyst::Init();
+	SignalAnalyst::SelectWindowFunction(WTF_HANNING);
+	SignalAnalyst::SetWindowSize(windowSize);
+	SignalAnalyst::SetDataReference(pair_data.m_samples.data(), pair_data.m_samples.size());
+	SignalAnalyst::SetDataRate(pair_data.m_header.sample_rate);
+
+	// Do this here because we only need it done once; if we support file change or updating above settings, plot needs to be recomputed
+	SignalAnalyst::ComputePlot();
 
 	sys_init();
 
@@ -141,13 +151,27 @@ int main(int argc, char* argv[])
 	float time_prev = 0.f;
 	float time_now = 0.f;
 
+
 	//for high and low pass
 	float cutoffLow = 100.f;
 	float cutoffHigh = 100.f;
 	std::vector<float> lowpass, highpass;
 
 
+	// Final steps for spectrum rendering...
+	const unsigned render_width = 512;
+	std::vector<float> spectrum_graph(512, 0.0f);
 
+	float x_min = pair_data.m_header.sample_rate / static_cast<float>(windowSize);
+	float x_max = pair_data.m_header.sample_rate / 2.0f;
+	float x_step = (x_max - x_min) / render_width;
+	float x_pos = x_min;
+
+	for (unsigned i = 0U; i < render_width; ++i)
+	{
+		spectrum_graph[i] = SignalAnalyst::GetProcessedValue(x_pos, x_pos + x_step);
+		x_pos += x_step;
+	}
 
 	// Main loop
 	while (!glfwWindowShouldClose(g_context))
@@ -261,9 +285,20 @@ int main(int argc, char* argv[])
 			//
 			//
 			std::vector<float> result = Compressor(pkt)();
-			ImGui::PlotLines("Compressed Waveform", result.data(), result.size(), 0, "input", -1.0f, 1.0f, ImVec2(0, 100));
+			ImGui::PlotLines("Compressed Waveform", result.data(), result.size(), 0, "output", -1.0f, 1.0f, ImVec2(0, 100));
 
-			// high low pass filters
+
+			// Render spectrum
+			ImGui::PlotLines("Spectrum", spectrum_graph.data(), spectrum_graph.size(), 0, "file data", -46.0f, -10.0f, ImVec2(0, 100));
+
+			// Use functions to generate output
+			// FIXME: This is rather awkward because current plot API only pass in indices. We probably want an API passing floats and user provide sample rate/count.
+			struct Funcs
+			{
+				static float Sin(void*, int i) { return sinf(i * 0.1f); }
+				static float Saw(void*, int i) { return (i & 1) ? 1.0f : 0.0f; }
+			};
+			static int func_type = 0, display_count = 70;
 			ImGui::Separator();
 			ImGui::PlotLines("Entire Waveform", pair_data.m_samples.data(), pair_data.m_samples.size() / 2, 0, "", -1.0f, 1.0f, ImVec2(0, 100), 4);
 
@@ -353,6 +388,8 @@ int main(int argc, char* argv[])
 		glfwSwapBuffers(g_context);
 
 	}
+
+	SignalAnalyst::Deinit();
 
 	// Cleanup
 	ImGui_ImplGlfwGL3_Shutdown();

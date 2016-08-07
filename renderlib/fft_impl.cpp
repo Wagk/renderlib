@@ -347,6 +347,8 @@ void SignalAnalyst::ComputePlot()
 		return;
 	}
 
+	st_Processed.clear();
+
 	int half = st_WinSize / 2;
 	st_Processed.resize(st_WinSize, 0.0f);
 
