@@ -75,16 +75,18 @@ namespace io
 
 			std::vector<short> wav_data(wav_header.subchunk2_size);
 
-			for (size_t i = 0; i < wav_header.subchunk2_size; ++i)
-			{
-				wav.read(reinterpret_cast<char*>(&wav_data[i]), sizeof(short));
-			}
+			//for (size_t i = 0; i < wav_header.subchunk2_size; ++i)
+			//{
+			//	wav.read(reinterpret_cast<char*>(&wav_data[i]), sizeof(short));
+			//}
+
+			wav.read(reinterpret_cast<char*>(wav_data.data()), wav_header.subchunk2_size);
 
 			file wav_file;
 			wav_file.m_header = wav_header;
-			wav_file.m_data = wav_data;
+			wav_file.m_data = std::move(wav_data);
 
-			return result(wav_file, WAV_GOOD);
+			return result(std::move(wav_file), WAV_GOOD);
 		}
 
 		void SaveWAV(const std::string& path, const file& wav)

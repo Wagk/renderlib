@@ -65,19 +65,36 @@ static void sys_init()
 	//io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
 }
 
-int main(int, char**)
+int main(int argc, char* argv[])
 {
+	std::string load_file;
+	std::string save_file;
 
-	auto sound_data = io::wav::LoadWAV("test.wav");
+	if (argc != 3)
+	{
+		std::cout << "Loading from default test input" << std::endl;
+		std::cout << "Saving to default test output" << std::endl;
+
+		load_file = "test.wav";
+		save_file = "test2.wav";
+	}
+	else
+	{
+		load_file = argv[1];
+		save_file = argv[2];
+	}
+
+
+	auto sound_data = io::wav::LoadWAV(load_file);
 	if (sound_data.second != io::wav::WAV_GOOD)
 	{
 		return -1;
 	}
 	else
 	{
-		//io::wav::SaveWAV("test2.wav", load.first);
+		io::wav::SaveWAV(save_file, sound_data.first);
 	}
-	auto pair_data = io::wav::FloatChannel(sound_data.first);
+	//auto pair_data = io::wav::FloatChannel(sound_data.first);
 
 
 
@@ -149,7 +166,7 @@ int main(int, char**)
 			//ImGui::PlotLines("Lines", values, IM_ARRAYSIZE(values), values_offset, "avg 0.0", -1.0f, 1.0f, ImVec2(0,80));
 			//ImGui::PlotHistogram("Histogram", arr, IM_ARRAYSIZE(arr), 0, NULL, 0.0f, 1.0f, ImVec2(0,80));
 
-			ImGui::PlotLines("CS225 Wav Sample", pair_data.data(), pair_data.size(), 0, "avg 0.0", -150.0f, 150.0f, ImVec2(0,80));
+			//ImGui::PlotLines("CS225 Wav Sample", pair_data.data(), pair_data.size(), 0, "avg 0.0", -150.0f, 150.0f, ImVec2(0,80));
 			ImGui::PlotHistogram("Histogram", arr, IM_ARRAYSIZE(arr), 0, NULL, 0.0f, 1.0f, ImVec2(0,80));
 
 			// Use functions to generate output
