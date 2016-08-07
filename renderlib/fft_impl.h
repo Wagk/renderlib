@@ -30,6 +30,8 @@ public:
 	static void IFFT(int n, float* realIn, float* imagIn, float* realOut, float* imagOut);
 
 	static void RealFFT(int n, float* realIn, float* realOut, float* imagOut);
+	static void ERealFFT(int n, float* realIn, float* realOut, float* imagOut);
+	static void ERealIFFT(int n, float* realIn, float* imagIn, float* realOut);
 
 	static void PowerSpectrum(int n, float* in, float* out);
 

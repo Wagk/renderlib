@@ -69,6 +69,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="exp_fft_impl.cpp" />
     <ClCompile Include="fft_impl.cpp" />
     <ClCompile Include="imgui\imgui.cpp" />
     <ClCompile Include="imgui\imgui_demo.cpp" />
@@ -78,6 +79,7 @@
     <ClCompile Include="wav_loader.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="exp_fft_impl.h" />
     <ClInclude Include="fft_impl.h" />
     <ClInclude Include="GLFW\glfw3.h" />
     <ClInclude Include="GLFW\glfw3native.h" />

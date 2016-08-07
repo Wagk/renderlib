@@ -1,4 +1,5 @@
 #include "fft_impl.h"
+#include "exp_fft_impl.h"
 #include <cmath>
 
 #ifndef max
@@ -94,7 +95,7 @@ void SignalAnalyst::RealFFT(int n, float* realIn, float* realOut, float* imagOut
 	float wr = 1.0f + wpr;
 	float wi = wpi;
 
-	for (int i = 1; i < half / 2; i++) {
+	for (int i = 1; i < half / 2; ++i) {
 
 		int i3 = half - i;
 
@@ -118,6 +119,72 @@ void SignalAnalyst::RealFFT(int n, float* realIn, float* realOut, float* imagOut
 
 	delete[] tempReal;
 	delete[] tempImag;
+}
+
+void SignalAnalyst::ERealFFT(int n, float* realIn, float* realOut, float* imagOut)
+{
+	int i;
+	HFFT hFFT = Experimental::GetFFT(n);
+	float *pFFT = new float[n];
+	// Copy the data into the processing buffer
+	for (i = 0; i < n; i++)
+		pFFT[i] = realIn[i];
+
+	// Perform the FFT
+	Experimental::RealFFT(pFFT, hFFT);
+
+	// Copy the data into the real and imaginary outputs
+	for (i = 1; i< (n / 2); i++) {
+		realOut[i] = pFFT[hFFT->BitReversed[i]];
+		imagOut[i] = pFFT[hFFT->BitReversed[i] + 1];
+	}
+
+	// Handle the (real-only) DC and Fs/2 bins
+	realOut[0] = pFFT[0];
+	realOut[i] = pFFT[1];
+	imagOut[0] = imagOut[i] = 0;
+
+	// Fill in the upper half using symmetry properties
+	for (i++; i < n; i++) {
+		realOut[i] = realOut[n - i];
+		imagOut[i] = -imagOut[n - i];
+	}
+
+	delete[] pFFT;
+	Experimental::ReleaseFFT(hFFT);
+}
+
+void SignalAnalyst::ERealIFFT(int n, float* realIn, float* imagIn, float* realOut)
+{
+	// Remap to RealFFTf() function
+	int i;
+	HFFT hFFT = Experimental::GetFFT(n);
+	float *pFFT = new float[n];
+
+	// Copy the data into the processing buffer
+	for (i = 0; i < (n / 2); i++)
+		pFFT[2 * i] = realIn[i];
+
+	if (imagIn == NULL) {
+		for (i = 0; i < (n / 2); i++)
+			pFFT[2 * i + 1] = 0;
+	}
+	else {
+		for (i = 0; i < (n / 2); i++)
+			pFFT[2 * i + 1] = imagIn[i];
+	}
+
+	// Put the fs/2 component in the imaginary part of the DC bin
+	pFFT[1] = realIn[i];
+
+	// Perform the FFT
+	Experimental::InverseRealFFT(pFFT, hFFT);
+
+	// Copy the data to the (purely real) output buffer
+	Experimental::ReorderToTime(hFFT, pFFT, realOut);
+
+	delete[] pFFT;
+	Experimental::ReleaseFFT(hFFT);
 }
 
 void SignalAnalyst::PowerSpectrum(int n, float* in, float* out)
