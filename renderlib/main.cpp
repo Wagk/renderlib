@@ -102,6 +102,14 @@ int main(int argc, char* argv[])
 		auto sample = io::wav::ToSample(sound_data.first);
 		auto wavfile = io::wav::ToFile(sample);
 		io::wav::SaveWAV(save_file, wavfile);
+
+
+		auto compress_sample = sample;
+
+		CompressionPacket sample_packet(compress_sample.m_samples);
+		compress_sample.m_samples = Compressor(sample_packet)();
+		wavfile = io::wav::ToFile(compress_sample);
+		io::wav::SaveWAV("compress.wav", wavfile);
 	}
 	auto pair_data = io::wav::ToSample(sound_data.first);
 
@@ -248,7 +256,8 @@ int main(int argc, char* argv[])
 
 			ImGui::PlotLines("Uncompressed Waveform", sinVec.data(), sinVec.size(), 0, "input", -1.0f, 1.0f, ImVec2(0, 100));
 
-			CompressionPacket pkt(sinVec);
+			std::vector<float> HACK_BUFFER(view_buffer,view_buffer+view_buffer_size);
+			CompressionPacket pkt(HACK_BUFFER);
 			//
 			//
 			std::vector<float> result = Compressor(pkt)();

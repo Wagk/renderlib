@@ -128,7 +128,7 @@ namespace io
 
 			float range = USHRT_MAX;
 
-			std::for_each(data.begin(), data.end(), [range, min_val](auto& val) { val = ((val - min_val) / range) * 2 - 1; });
+			std::for_each(data.begin(), data.end(), [range](auto& val) { val = val / SHRT_MAX; });
 
 			sample retval;
 			retval.m_header = file.m_header;

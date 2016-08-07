@@ -1,5 +1,8 @@
 #include "our_fft.h"
 
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
 
 std::vector<std::complex<double> > Redix2( unsigned inc, unsigned N, const std::vector<std::complex<double> >& list)
 {
