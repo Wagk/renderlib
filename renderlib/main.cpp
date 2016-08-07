@@ -252,49 +252,49 @@ int main(int argc, char* argv[])
 
 
 
-			// Use functions to generate output
-			// FIXME: This is rather awkward because current plot API only pass in indices. We probably want an API passing floats and user provide sample rate/count.
-			struct Funcs
-			{
-				static float Sin(void*, int i) { return sinf(i * 0.1f); }
-				static float Saw(void*, int i) { return (i & 1) ? 1.0f : 0.0f; }
-			};
-			static int func_type = 0, display_count = 70;
-			ImGui::Separator();
+			//// Use functions to generate output
+			//// FIXME: This is rather awkward because current plot API only pass in indices. We probably want an API passing floats and user provide sample rate/count.
+			//struct Funcs
+			//{
+			//	static float Sin(void*, int i) { return sinf(i * 0.1f); }
+			//	static float Saw(void*, int i) { return (i & 1) ? 1.0f : 0.0f; }
+			//};
+			//static int func_type = 0, display_count = 70;
+			//ImGui::Separator();
 
-			ImGui::PushItemWidth(100);
-			{
-				ImGui::Combo("func", &func_type, "Sin\0Saw\0");
-			}
-			ImGui::PopItemWidth();
+			//ImGui::PushItemWidth(100);
+			//{
+			//	ImGui::Combo("func", &func_type, "Sin\0Saw\0");
+			//}
+			//ImGui::PopItemWidth();
 
-			ImGui::SameLine();
+			//ImGui::SameLine();
 
-			//ImGui::SliderInt("Sample count", &display_count, 1, 500);
-			float(*func)(void*, int) = (func_type == 0) ? Funcs::Sin : Funcs::Saw;
-			//ImGui::PlotLines("Lines", func, NULL, display_count, 0, NULL, -1.0f, 1.0f, ImVec2(0,80));
-			//ImGui::PlotHistogram("Histogram", func, NULL, display_count, 0, NULL, -1.0f, 1.0f, ImVec2(0,80));
+			////ImGui::SliderInt("Sample count", &display_count, 1, 500);
+			//float(*func)(void*, int) = (func_type == 0) ? Funcs::Sin : Funcs::Saw;
+			////ImGui::PlotLines("Lines", func, NULL, display_count, 0, NULL, -1.0f, 1.0f, ImVec2(0,80));
+			////ImGui::PlotHistogram("Histogram", func, NULL, display_count, 0, NULL, -1.0f, 1.0f, ImVec2(0,80));
 
-			ImGui::Separator();
+			//ImGui::Separator();
 
-			// Animate a simple progress bar
-			static float progress = 0.0f, progress_dir = 1.0f;
-			if (animate)
-			{
-				progress += progress_dir * 0.4f * ImGui::GetIO().DeltaTime;
-				if (progress >= +1.1f) { progress = +1.1f; progress_dir *= -1.0f; }
-				if (progress <= -0.1f) { progress = -0.1f; progress_dir *= -1.0f; }
-			}
+			//// Animate a simple progress bar
+			//static float progress = 0.0f, progress_dir = 1.0f;
+			//if (animate)
+			//{
+			//	progress += progress_dir * 0.4f * ImGui::GetIO().DeltaTime;
+			//	if (progress >= +1.1f) { progress = +1.1f; progress_dir *= -1.0f; }
+			//	if (progress <= -0.1f) { progress = -0.1f; progress_dir *= -1.0f; }
+			//}
 
-			// Typically we would use ImVec2(-1.0f,0.0f) to use all available width, or ImVec2(width,0.0f) for a specified width. ImVec2(0.0f,0.0f) uses ItemWidth.
-			//ImGui::ProgressBar(progress, ImVec2(0.0f,0.0f));
-			//ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
-			//ImGui::Text("Progress Bar");
+			//// Typically we would use ImVec2(-1.0f,0.0f) to use all available width, or ImVec2(width,0.0f) for a specified width. ImVec2(0.0f,0.0f) uses ItemWidth.
+			////ImGui::ProgressBar(progress, ImVec2(0.0f,0.0f));
+			////ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
+			////ImGui::Text("Progress Bar");
 
-			float progress_saturated = (progress < 0.0f) ? 0.0f : (progress > 1.0f) ? 1.0f : progress;
-			char buf[32];
-			sprintf(buf, "%d/%d", (int)(progress_saturated * 1753), 1753);
-			//ImGui::ProgressBar(progress, ImVec2(0.f,0.f), buf);
+			//float progress_saturated = (progress < 0.0f) ? 0.0f : (progress > 1.0f) ? 1.0f : progress;
+			//char buf[32];
+			//sprintf(buf, "%d/%d", (int)(progress_saturated * 1753), 1753);
+			////ImGui::ProgressBar(progress, ImVec2(0.f,0.f), buf);
 		}
 		ImGui::End();
 
