@@ -96,14 +96,16 @@ int main(int argc, char* argv[])
 	}
 	else
 	{
-		io::wav::SaveWAV(save_file, sound_data.first);
+		auto sample = io::wav::ToSample(sound_data.first);
+		auto wavfile = io::wav::ToFile(sample);
+		io::wav::SaveWAV(save_file, wavfile);
 	}
-	auto pair_data = io::wav::FloatChannel(sound_data.first);
+	auto pair_data = io::wav::ToSample(sound_data.first);
 
 	auto sin_data = pair_data;
-	for (size_t i = 0; i < sin_data.size(); ++i)
+	for (size_t i = 0; i < sin_data.m_samples.size(); ++i)
 	{
-		sin_data[i] = std::sin(i);
+		sin_data.m_samples[i] = std::sin(i);
 	}
 
 
@@ -201,7 +203,7 @@ int main(int argc, char* argv[])
 			//ImGui::PlotLines("Lines", values, IM_ARRAYSIZE(values), values_offset, "avg 0.0", -1.0f, 1.0f, ImVec2(0,80));
 			//ImGui::PlotHistogram("Histogram", arr, IM_ARRAYSIZE(arr), 0, NULL, 0.0f, 1.0f, ImVec2(0,80));
 
-			ImGui::PlotLines("CS225 Wav Sample", pair_data.data(), pair_data.size() / 2 , 0, "", -1.0f, 1.0f, ImVec2(0, 100), 4);
+			ImGui::PlotLines("CS225 Wav Sample", pair_data.m_samples.data(), pair_data.m_samples.size() / 2 , 0, "", -1.0f, 1.0f, ImVec2(0, 100), 4);
 			/*ImGui::PlotLines(
 				"CS225 Wav Sample",
 				sin_data.data(),sin_data.size() / 2,
@@ -212,7 +214,7 @@ int main(int argc, char* argv[])
 				4
 			);*/
 
-			ImGui::PlotHistogram("Float value Histogram", pair_data.data(), pair_data.size()/2, 0, NULL, 0.0f, 1.0f, ImVec2(0,100));
+			ImGui::PlotHistogram("Float value Histogram", pair_data.m_samples.data(), pair_data.m_samples.size()/2, 0, NULL, 0.0f, 1.0f, ImVec2(0,100));
 
 			// Use functions to generate output
 			// FIXME: This is rather awkward because current plot API only pass in indices. We probably want an API passing floats and user provide sample rate/count.

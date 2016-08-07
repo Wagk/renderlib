@@ -46,6 +46,12 @@ namespace io
 			std::vector<short> m_data;
 		};
 
+		struct sample
+		{
+			header m_header;
+			std::vector<float> m_samples;
+		};
+
 		/*changes here*/
 		extern std::string globalWavState;
 		/*to here*/
@@ -58,7 +64,9 @@ namespace io
 		void UpdateWavFileStatus(const std::string &filepath);
 		/*to here*/
 
-		std::pair<std::vector<float>, std::vector<float>> SplitChannels(const file& file);
-		std::vector<float> FloatChannel(const file& file);
+		//std::pair<std::vector<float>, std::vector<float>> SplitChannels(const file& file);
+		sample ToSample(const file& file);
+		file ToFile(const sample& sample);
+
 	}
 } //

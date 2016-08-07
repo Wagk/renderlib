@@ -110,7 +110,7 @@ namespace io
 			return std::make_pair(left, right);
 		}
 
-		std::vector<float> FloatChannel(const file & file)
+		sample ToSample(const file & file)
 		{
 			union splitter
 			{
@@ -141,11 +141,29 @@ namespace io
 				data[i] = static_cast<float>(file.m_data[i]);
 			}
 
-			float range = max_val - min_val;
+			float range = USHRT_MAX;//max_val - min_val;
 
 			std::for_each(data.begin(), data.end(), [range, min_val](auto& val) { val = ((val - min_val) / range) * 2 - 1; });
 
-			return data;
+			sample retval;
+			retval.m_header = file.m_header;
+			retval.m_samples = data;
+
+			return retval;
+		}
+
+		file ToFile(const sample& sample)
+		{
+			file retval;
+			retval.m_header = sample.m_header;
+			retval.m_data.resize(sample.m_samples.size());
+
+			for (size_t i = 0; i < sample.m_samples.size(); ++i)
+			{
+				retval.m_data[i] = static_cast<short>(sample.m_samples[i] * SHRT_MAX);
+			}
+			
+			return retval;
 		}
 
 		/*changes here*/
