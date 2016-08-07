@@ -46,8 +46,17 @@ namespace io
 			std::vector<short> m_data;
 		};
 
+		/*changes here*/
+		extern std::string globalWavState;
+		/*to here*/
+
 		std::pair<file, status> LoadWAV(const std::string& filepath);
 		void SaveWAV(const std::string& filepath, const file& wav);
+
+		/*changes here*/
+		void PlayWavFile(const std::string &filepath, const bool &toplay);
+		void UpdateWavFileStatus(const std::string &filepath);
+		/*to here*/
 
 		std::pair<std::vector<float>, std::vector<float>> SplitChannels(const file& file);
 		std::vector<float> FloatChannel(const file& file);

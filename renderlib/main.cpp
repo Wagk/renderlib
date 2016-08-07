@@ -6,6 +6,10 @@
 #pragma comment(lib, "./lib/glfw3.lib")
 #pragma comment(lib, "opengl32.lib")
 
+/*changes here*/
+#pragma comment(lib, "winmm.lib")
+/*to here*/
+
 // GLEW
 #define GLEW_STATIC
 #include "GL/glew.h"
@@ -87,6 +91,10 @@ int main(int, char**)
 	bool show_another_window = false;
 	ImVec4 clear_color = ImColor(114, 144, 154);
 
+	//globals for button
+	bool playsound = false;
+	std::string playbuttonTxt = "play";
+
 	// Main loop
 	while (!glfwWindowShouldClose(g_context))
 	{
@@ -124,6 +132,27 @@ int main(int, char**)
 		bool math_window = false;
 		ImGui::Begin("Test", &math_window);
 		{
+			/*changes here*/
+			if (ImGui::Button(playbuttonTxt.c_str(), ImVec2(50, 50)))
+			{
+
+
+				if (playbuttonTxt == "play")
+				{
+					io::wav::PlayWavFile("test.wav", true);
+
+				}
+				else
+				{
+					io::wav::PlayWavFile("test.wav", false);
+
+				}
+
+
+			}
+			/*to here*/
+
+
 			//stuff inside
 			bool animate = true;
 			ImGui::Checkbox("Animate", &animate);
@@ -197,6 +226,17 @@ int main(int, char**)
 			ImGui::ProgressBar(progress, ImVec2(0.f,0.f), buf);
 			}
 			ImGui::End();
+
+			/*changes here*/
+			io::wav::UpdateWavFileStatus("test.wav");
+			std::string curWavFileStatus = io::wav::globalWavState;
+			if (curWavFileStatus == "stopped")
+				playbuttonTxt = "play";
+			else if (curWavFileStatus == "playing")
+				playbuttonTxt = "pause";
+			else if (curWavFileStatus == "paused")
+				playbuttonTxt = "play";
+			/*to here*/
 
 			// Rendering
 			int display_w, display_h;

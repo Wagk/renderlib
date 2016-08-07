@@ -1,5 +1,8 @@
 #include "wav_loader.h"
 
+#include <Windows.h>
+#include <mmsystem.h>
+
 namespace io
 {
 	namespace wav
@@ -10,6 +13,9 @@ namespace io
 		const int MAX_CHANNELS = 2; //!< the maximum permissible number of channels
 		const int MAX_SAMPLE = 16; //!< The maximum permissable sample size
 
+								   /*changes here*/
+		std::string globalWavState = ""; //!<lame global to track status of state of one file.
+										 /*to here*/
 
 		namespace
 		{
@@ -111,7 +117,7 @@ namespace io
 				splitter split;
 
 				split.val = piece;
-				
+
 				left.push_back(split.pair[0]);
 				right.push_back(split.pair[1]);
 			}
@@ -142,6 +148,37 @@ namespace io
 
 			return data;
 		}
+
+		/*changes here*/
+		void PlayWavFile(const std::string &filepath, const bool &toplay)
+		{
+			if (toplay)
+			{
+				if (globalWavState == "paused")
+					mciSendString(std::string("resume \"" + filepath + "\"").c_str(), NULL, 0, NULL);
+				else if (globalWavState == "stopped" || globalWavState == "")
+					mciSendString(std::string("play \"" + filepath + "\"").c_str(), NULL, 0, NULL);
+			}
+			else
+			{
+				if (globalWavState == "playing")
+					mciSendString(std::string("pause \"" + filepath + "\"").c_str(), NULL, 0, NULL);
+			}
+
+
+		}
+		void UpdateWavFileStatus(const std::string &filepath)
+		{
+			char mcidata[129];
+			int mcidatalen = sizeof(mcidata) - 1;
+
+			mciSendString(std::string("status " + filepath + " mode").c_str(), mcidata, mcidatalen, NULL);
+
+			globalWavState = mcidata;
+
+		}
+
+		/*to here*/
 
 	}
 }
