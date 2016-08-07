@@ -287,14 +287,11 @@ int main(int argc, char* argv[])
 
 			ImGui::PlotLines("Uncompressed Waveform", sinVec.data(), sinVec.size(), 0, "input", -1.0f, 1.0f, ImVec2(0, 100));
 
-			
 			CompressionPacket pkt2(sinVec);
-			//
-			//
-			std::vector<float> result = Compressor(pkt)();
-			ImGui::PlotLines("Compressed Waveform", result.data(), result.size(), 0, "output", -1.0f, 1.0f, ImVec2(0, 100));
+			std::vector<float> result_sinVec = Compressor(pkt2)();
 
-
+			ImGui::PlotLines("Compressed Waveform", result_sinVec.data(), result_sinVec.size(), 0, "input", -1.0f, 1.0f, ImVec2(0, 100));
+			// high low pass filters
 			// Render spectrum
 			ImGui::PlotLines("Spectrum", spectrum_graph.data(), spectrum_graph.size(), 0, "file data", -46.0f, -10.0f, ImVec2(0, 100));
 
