@@ -266,9 +266,16 @@ int main(int argc, char* argv[])
 			{
 				view_buffer[i] = pair_data.m_samples[(i + (int)skipval) % pair_data.m_samples.size()];
 			} 
+			std::vector<float> HACK_BUFFER(view_buffer, view_buffer + view_buffer_size);
+			CompressionPacket pkt(HACK_BUFFER);
+			//
+			//
+			std::vector<float> result = Compressor(pkt)();
+
+
 
 			ImGui::PlotLines("Dynamic Waveform", view_buffer, view_buffer_size, 0, "", -1.0f, 1.0f, ImVec2(0, 100), 4);
-
+			ImGui::PlotLines("Compressed Dynamic Waveform", result.data(), result.size(), 0, "input", -1.0f, 1.0f, ImVec2(0, 100));
 			ImGui::PlotHistogram("File Value Histogram", shortvec.data(), shortvec.size() / 2, 0, NULL, SHRT_MIN, SHRT_MAX, ImVec2(0, 100));
 
 			static const float Amplitude = 2.0f;
@@ -280,8 +287,8 @@ int main(int argc, char* argv[])
 
 			ImGui::PlotLines("Uncompressed Waveform", sinVec.data(), sinVec.size(), 0, "input", -1.0f, 1.0f, ImVec2(0, 100));
 
-			std::vector<float> HACK_BUFFER(view_buffer,view_buffer+view_buffer_size);
-			CompressionPacket pkt(HACK_BUFFER);
+			
+			CompressionPacket pkt2(sinVec);
 			//
 			//
 			std::vector<float> result = Compressor(pkt)();
