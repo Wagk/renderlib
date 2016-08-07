@@ -28,6 +28,7 @@
 
 #include "wav_loader.h"
 #include "LowHighPassFilter.h"
+#include "Compressor.h"
 
 #define IM_ARRAYSIZE(_ARR)  ((int)(sizeof(_ARR)/sizeof(*_ARR)))
 
@@ -109,6 +110,12 @@ int main(int argc, char* argv[])
 		sin_data.m_samples[i] = std::sin(i);
 	}
 
+	std::vector<float> shortvec;
+	for (auto elem : sound_data.first.m_data)
+	{
+		shortvec.push_back(elem);
+	}
+
 
 
 	sys_init();
@@ -138,7 +145,7 @@ int main(int argc, char* argv[])
 		time_prev = time_now;
 		time_now = ImGui::GetTime();
 		delta_t = time_now - time_prev;
-		skipval += 0.5f;// 1 / 60.f;// delta_t;
+		skipval += delta_t;
 
 		//// 1. Show a simple window
 		//// Tip: if we don't call ImGui::Begin()/ImGui::End() the widgets appears in a window automatically called "Debug"
@@ -226,7 +233,24 @@ int main(int argc, char* argv[])
 
 			ImGui::PlotLines("Dynamic Waveform", view_buffer, view_buffer_size, 0, "", -1.0f, 1.0f, ImVec2(0, 100), 4);
 
-			ImGui::PlotHistogram("Float value Histogram", pair_data.m_samples.data(), pair_data.m_samples.size() / 2, 0, NULL, 0.0f, 1.0f, ImVec2(0, 100));
+			ImGui::PlotHistogram("File Value Histogram", shortvec.data(), shortvec.size() / 2, 0, NULL, SHRT_MIN, SHRT_MAX, ImVec2(0, 100));
+
+			static const float Amplitude = 2.0f;
+			std::vector<float> sinVec(512);
+			for (unsigned i = 0; i < sinVec.size(); ++i)
+			{
+				sinVec[i] = Amplitude * sinf(i * 0.5f) + Amplitude*1.5f * sinf(i * 0.2f);
+			}
+
+			ImGui::PlotLines("Uncompressed Waveform", sinVec.data(), sinVec.size(), 0, "input", -1.0f, 1.0f, ImVec2(0, 100));
+
+			CompressionPacket pkt(sinVec);
+			//
+			//
+			std::vector<float> result = Compressor(pkt)();
+			ImGui::PlotLines("Compressed Waveform", result.data(), result.size(), 0, "input", -1.0f, 1.0f, ImVec2(0, 100));
+
+
 
 			// Use functions to generate output
 			// FIXME: This is rather awkward because current plot API only pass in indices. We probably want an API passing floats and user provide sample rate/count.

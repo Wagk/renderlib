@@ -42,6 +42,9 @@
     <ClCompile Include="exp_fft_impl.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Compressor.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="GLFW\glfw3.h">
@@ -93,6 +96,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="exp_fft_impl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Compressor.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
