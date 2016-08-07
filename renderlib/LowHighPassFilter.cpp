@@ -1,4 +1,5 @@
 #include <vector>
+#include "LowHighPassFilter.h"
 
 std::vector<float> LowPassFilter(const std::vector<float>& input, float SAMPLE_RATE, float CUTOFF)
 {

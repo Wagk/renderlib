@@ -75,6 +75,7 @@
     <ClCompile Include="imgui\imgui_demo.cpp" />
     <ClCompile Include="imgui\imgui_draw.cpp" />
     <ClCompile Include="imgui_impl_glfw_gl3.cpp" />
+    <ClCompile Include="LowHighPassFilter.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="wav_loader.cpp" />
   </ItemGroup>
@@ -94,6 +95,7 @@
     <ClInclude Include="imgui\stb_textedit.h" />
     <ClInclude Include="imgui\stb_truetype.h" />
     <ClInclude Include="imgui_impl_glfw_gl3.h" />
+    <ClInclude Include="LowHighPassFilter.h" />
     <ClInclude Include="wav_loader.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

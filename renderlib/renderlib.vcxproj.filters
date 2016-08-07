@@ -36,6 +36,9 @@
     <ClCompile Include="wav_loader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="LowHighPassFilter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="exp_fft_impl.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -84,6 +87,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="wav_loader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LowHighPassFilter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="exp_fft_impl.h">
