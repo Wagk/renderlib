@@ -29,6 +29,7 @@
 #include "wav_loader.h"
 #include "LowHighPassFilter.h"
 #include "Compressor.h"
+#include "our_fft.h"
 
 #define IM_ARRAYSIZE(_ARR)  ((int)(sizeof(_ARR)/sizeof(*_ARR)))
 
