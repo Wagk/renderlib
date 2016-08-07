@@ -132,7 +132,10 @@ int main(int argc, char* argv[])
 	float time_prev = 0.f;
 	float time_now = 0.f;
 
-
+	//for high and low pass
+	float cutoffLow = 100.f;
+	float cutoffHigh = 100.f;
+	std::vector<float> lowpass, highpass;
 
 
 
@@ -250,6 +253,21 @@ int main(int argc, char* argv[])
 			std::vector<float> result = Compressor(pkt)();
 			ImGui::PlotLines("Compressed Waveform", result.data(), result.size(), 0, "input", -1.0f, 1.0f, ImVec2(0, 100));
 
+			// high low pass filters
+			ImGui::Separator();
+			ImGui::PlotLines("Entire Waveform", pair_data.m_samples.data(), pair_data.m_samples.size() / 2, 0, "", -1.0f, 1.0f, ImVec2(0, 100), 4);
+
+			lowpass = LowPassFilter(pair_data.m_samples, sound_data.first.m_header.sample_rate, cutoffLow);
+			//fft.do_ifft(lowpass.data(), ifft_output.data());
+			//fft.rescale(ifft_output.data());
+			ImGui::PlotLines("Low", lowpass.data(), pair_data.m_samples.size() / 2, 0, "output", -1, 1, ImVec2(0, 100));
+			ImGui::SliderFloat("Cutoff Low", &cutoffLow, 100, 10000);
+
+			highpass = HighPassFilter(pair_data.m_samples, sound_data.first.m_header.sample_rate, cutoffHigh);
+			ImGui::PlotLines("High", highpass.data(), highpass.size() / 2, 0, "output", -1, 1, ImVec2(0, 100));
+			ImGui::SliderFloat("Cutoff High", &cutoffHigh, 100, 10000);
+			ImGui::Separator();
+			// end high low pass filters
 
 
 			//// Use functions to generate output
