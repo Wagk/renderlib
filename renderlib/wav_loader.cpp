@@ -1,5 +1,8 @@
 #include "wav_loader.h"
 
+#include <iostream>
+#include <algorithm>
+
 namespace io
 {
 	namespace wav
@@ -56,30 +59,11 @@ namespace io
 				wav_header.subchunk2_size != wav_header.chunk_size - sizeof(header) + sizeof(unsigned int) + 4
 				)
 			{
+				std::cout << "Load failed!" << std::endl;
 				return result(file(), WAV_BAD);
 			}
 
-			/*if (std::memcmp(riff_label, riff_cmp, sizeof(riff_label)) ||
-				std::memcmp(file_tag, wave_cmp, sizeof(file_tag)) ||
-				std::memcmp(fmt_label, fmt_cmp, sizeof(fmt_label)) ||
-				std::memcmp(data_label, data_cmp, sizeof(data_label)) ||
-				audio_format != AUDIO_FORMAT ||
-				channel_count > MAX_CHANNELS ||
-				bits_per_sample != MAX_SAMPLE ||
-				data_size != riff_size - WAVE_HEADER_SIZE + unintsz
-				+ charsz * WAVE_LABEL_SIZE)
-			{
-				infile.close();
-				return wavefile::WAV_BAD;
-			}*/
-
 			std::vector<short> wav_data(wav_header.subchunk2_size);
-
-			//for (size_t i = 0; i < wav_header.subchunk2_size; ++i)
-			//{
-			//	wav.read(reinterpret_cast<char*>(&wav_data[i]), sizeof(short));
-			//}
-
 			wav.read(reinterpret_cast<char*>(wav_data.data()), wav_header.subchunk2_size);
 
 			file wav_file;
@@ -129,18 +113,28 @@ namespace io
 				short val;
 			};
 
-			std::vector<float> data;
-			data.reserve(file.m_data.size());
+			std::vector<float> data(file.m_data.size());
 
-			for (short elem : file.m_data)
+			const auto file_minmax = std::minmax_element(file.m_data.begin(), file.m_data.end());
+			
+			for (size_t i = 0; i < file.m_data.size(); ++i)
 			{
-				splitter split;
+				//splitter split;
 
-				split.val = elem;
+				//std::cout << << std::endl;
 
-				data.push_back(split.val);
+				/*split.val = file.m_data[i];
+
+				data[i] = split.val*/;
+				
+				data[i] = static_cast<float>(file.m_data[i]);
 				//data.push_back(split.pair[1]);
 			}
+
+			auto minmax = std::minmax_element(data.begin(), data.end());
+			float range = *minmax.second;
+			
+			std::for_each(data.begin(), data.end(), [range](auto val) { return val / range; });
 
 			return data;
 		}

@@ -94,7 +94,7 @@ int main(int argc, char* argv[])
 	{
 		io::wav::SaveWAV(save_file, sound_data.first);
 	}
-	//auto pair_data = io::wav::FloatChannel(sound_data.first);
+	auto pair_data = io::wav::FloatChannel(sound_data.first);
 
 
 
