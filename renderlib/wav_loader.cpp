@@ -120,26 +120,30 @@ namespace io
 
 			std::vector<float> data(file.m_data.size());
 
-			const auto file_minmax = std::minmax_element(file.m_data.begin(), file.m_data.end());
-			
+			//const auto file_minmax = std::minmax_element(file.m_data.begin(), file.m_data.end());
+
+			float max_val = FLT_MIN;
+			float min_val = FLT_MAX;
+
 			for (size_t i = 0; i < file.m_data.size(); ++i)
 			{
-				//splitter split;
+				splitter split;
 
 				//std::cout << << std::endl;
 
-				/*split.val = file.m_data[i];
+	/*			split.val = file.m_data[i];
 
-				data[i] = split.val*/;
-				
+				data[i] = static_cast<float>(split.);*/
+
+				max_val = max(max_val, file.m_data[i]);
+				min_val = min(min_val, file.m_data[i]);
+
 				data[i] = static_cast<float>(file.m_data[i]);
-				//data.push_back(split.pair[1]);
 			}
 
-			auto minmax = std::minmax_element(data.begin(), data.end());
-			float range = *minmax.second;
-			
-			std::for_each(data.begin(), data.end(), [range](auto val) { return val / range; });
+			float range = max_val - min_val;
+
+			std::for_each(data.begin(), data.end(), [range, min_val](auto& val) { val = ((val - min_val) / range) * 2 - 1; });
 
 			return data;
 		}
