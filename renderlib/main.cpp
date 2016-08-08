@@ -241,7 +241,7 @@ int main(int argc, char* argv[])
 	}
 
 	// For changing .wav files
-	std::string prevTxt;
+	std::string prevTxt = load_file;
 	std::string prevInputTxt;
 
 	// Main loop
@@ -296,8 +296,16 @@ int main(int argc, char* argv[])
 				if (ImGui::InputText("Audio File", txtbook, txtbooklen))
 				{
 					if (strcmp(txtbook, "") != 0)
-						prevTxt = txtbook;
+					{
+						std::string curWavFileStatus = io::wav::globalWavState;
 
+						if (curWavFileStatus == "playing")
+						{
+							io::wav::PlayWavFile(prevTxt.c_str(), false);
+						}
+
+						prevTxt = txtbook;
+					}
 				}
 			}
 
@@ -321,7 +329,6 @@ int main(int argc, char* argv[])
 				if (playbuttonTxt == "play")
 				{
 					io::wav::PlayWavFile(prevTxt.c_str(), true);
-
 				}
 				else
 				{
@@ -623,7 +630,7 @@ int main(int argc, char* argv[])
 					lww_recompute = false;
 				}
 
-				ImGui::PlotLines("Le Wah Wah Output", lww_out.data(), lww_out.size(), 0, "output", -1, 1, ImVec2(0, 100));
+				ImGui::PlotLines("Le Wah Wah Output", lww_out.data(), lww_out.size() / 2, 0, "output", -1, 1, ImVec2(0, 100));
 
 				if (ImGui::Button("Save To File", ImVec2(100, 30)))
 				{
@@ -727,7 +734,7 @@ int main(int argc, char* argv[])
 		ImGui::End();
 
 		/*changes here*/
-		io::wav::UpdateWavFileStatus("test.wav");
+		io::wav::UpdateWavFileStatus(prevTxt);
 		std::string curWavFileStatus = io::wav::globalWavState;
 		if (curWavFileStatus == "stopped")
 		{

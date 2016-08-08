@@ -1,6 +1,6 @@
 #include "LeWahWah.h"
 
-#define LEWAHWAH_DEFAULT_RATE 44100.f
+#define LEWAHWAH_DEFAULT_RATE 44100
 
 #define clamp(a, b, c) a < b ? b : (a > c ? c : a)
 
@@ -19,7 +19,7 @@ void LeWahWah::Init(float freq, float startphase, float fb, int delay)
 	m_Frequency = freq;
 	m_StartPhase = startphase;
 	m_Feedback = clamp(fb / 4 + 0.74f, 0.0f, 1.0f);
-	m_Delay = static_cast<int>(delay / LEWAHWAH_DEFAULT_RATE * m_SampleRate);
+	m_Delay = static_cast<int>(delay / static_cast<float>(LEWAHWAH_DEFAULT_RATE) * m_SampleRate);
 
 	if (m_Delay < 1) m_Delay = 1;
 
@@ -55,8 +55,6 @@ LeWahWah::sample_type LeWahWah::ProcessOnSample(sample_type sample)
 	{
 		double lfo = (1 + cos(m_LFOSkipCounter * m_LFOSkipPhase + m_StartPhase));
 		m_LFONumber = std::complex<double>(cos(lfo) * m_Feedback, sin(lfo) * m_Feedback);
-
-		m_LFOSkipCounter = 0U;
 	};
 
 	outc = m_LFONumber * m_DelayBuffer[m_DelayCounter] + (1.0f - m_Feedback) * sample;
