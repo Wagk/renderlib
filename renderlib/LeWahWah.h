@@ -18,8 +18,8 @@ public:
 
 	bool IsInit() const;
 
-	void SetSampleRate(int rate);
-	int GetSampleRate() const;
+	void SetSampleRate(unsigned rate);
+	unsigned GetSampleRate() const;
 
 	void SetSkipCount(unsigned skipCount);
 	unsigned GetSkipCount() const;
@@ -27,7 +27,7 @@ public:
 private:
 	bool m_IsInit;
 
-	int m_SampleRate;
+	unsigned m_SampleRate;
 
 	unsigned m_LFOSkipSamples;
 

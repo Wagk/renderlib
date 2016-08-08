@@ -4,26 +4,26 @@
 #define M_PI 3.14159265358979323846
 #endif
 
-std::vector<std::complex<double> > Redix2( unsigned inc, unsigned N, const std::vector<std::complex<double> >& list)
+std::vector<std::complex<float> > Redix2( unsigned inc, unsigned N, const std::vector<std::complex<float> >& list)
 {
-	std::vector<std::complex<double> > temp;
+	std::vector<std::complex<float> > temp;
 		
-	double TWOPIoverN = 2.0 * M_PI / N;
+	float TWOPIoverN = 2.0 * M_PI / N;
 		
 	if(list.size() == 2)
 	{		
-		std::complex<double> W1(1.0,0.0);
+		std::complex<float> W1(1.0,0.0);
 				
 		temp.push_back(list[0] + list[1] * W1);
 		
-		std::complex<double> W2(-1.0,0.0);
+		std::complex<float> W2(-1.0,0.0);
 		
 		temp.push_back(list[0] + list[1] * W2);
 	}
 	else
 	{
-		std::vector<std::complex<double> > odd;
-		std::vector<std::complex<double> > even;
+		std::vector<std::complex<float> > odd;
+		std::vector<std::complex<float> > even;
 		
 		for (unsigned i = 0; i < list.size(); ++i)
 		{
@@ -37,8 +37,8 @@ std::vector<std::complex<double> > Redix2( unsigned inc, unsigned N, const std::
 			}
 		}
 		
-		std::vector<std::complex<double> >  even_list = Redix2(inc * 2,N , even);
-		std::vector<std::complex<double> >  odd_list = Redix2(inc * 2,N ,odd);
+		std::vector<std::complex<float> >  even_list = Redix2(inc * 2,N , even);
+		std::vector<std::complex<float> >  odd_list = Redix2(inc * 2,N ,odd);
 		
 		unsigned factor = list.size() / 2;
 				
@@ -46,7 +46,7 @@ std::vector<std::complex<double> > Redix2( unsigned inc, unsigned N, const std::
 		{
 			unsigned m = i * inc;
 			
-			std::complex<double> W(cos(TWOPIoverN * m),-sin(TWOPIoverN * m));
+			std::complex<float> W(cos(TWOPIoverN * m),-sin(TWOPIoverN * m));
 			
 			temp.push_back(even_list[i% factor] + W * odd_list[i % factor]);
 		}
@@ -56,20 +56,20 @@ std::vector<std::complex<double> > Redix2( unsigned inc, unsigned N, const std::
 	return temp;
 }
 
-std::vector<std::complex<double> > ourFFT(const std::vector<double>& list)
+std::vector<std::complex<float> > ourFFT(const std::vector<float>& list)
 {
 	unsigned N = list.size();
 	
-	std::vector<std::complex<double> > wave_data; wave_data.reserve(N);
+	std::vector<std::complex<float> > wave_data; wave_data.reserve(N);
 	
 	for(unsigned i = 0; i < N; ++i)
 	{
-		wave_data.push_back(std::complex<double>(list[i],0.0));
+		wave_data.push_back(std::complex<float>(list[i],0.0));
 	}
 		
 	while(N & (N - 1))
 	{
-		wave_data.push_back(std::complex<double>(0.0,0.0));
+		wave_data.push_back(std::complex<float>(0.0,0.0));
 		
 		N = wave_data.size();
 	}
@@ -77,22 +77,22 @@ std::vector<std::complex<double> > ourFFT(const std::vector<double>& list)
 	return Redix2(1, N , wave_data);
 }
 
-std::vector<double> ourIFFT(const std::vector<std::complex<double> >& rhs)
+std::vector<float> ourIFFT(const std::vector<std::complex<float> >& rhs)
 {
 	unsigned N = rhs.size();
 	
-	std::vector<std::complex<double> > temp; temp.reserve(N);
+	std::vector<std::complex<float> > temp; temp.reserve(N);
 				
 	for(unsigned i = 0; i < N; ++i)
 	{		
-		temp.push_back(std::complex<double>(rhs[i].imag(),rhs[i].real()));
+		temp.push_back(std::complex<float>(rhs[i].imag(),rhs[i].real()));
 	}
 	
-	std::vector<std::complex<double> > temp2 = Redix2(1,N,temp);
+	std::vector<std::complex<float> > temp2 = Redix2(1,N,temp);
 	
-	std::vector<double > result; result.reserve(N);
+	std::vector<float > result; result.reserve(N);
 	
-	double scale = 1.0 / N;
+	float scale = 1.0 / N;
 	
 	for(unsigned i = 0; i < N; ++i)
 	{

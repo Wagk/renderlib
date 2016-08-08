@@ -32,6 +32,7 @@
 #include "Compressor.h"
 #include "BiquadFilter.h"
 #include "BassBoost.h"
+#include "LeWahWah.h"
 #include "our_fft.h"
 
 #define IM_ARRAYSIZE(_ARR)  ((int)(sizeof(_ARR)/sizeof(*_ARR)))
@@ -197,9 +198,35 @@ int main(int argc, char* argv[])
 
 	//-- for bass boost filter
 
-	  // Final steps for spectrum rendering...
-	const unsigned render_width = 512;
-	std::vector<float> spectrum_graph(512, 0.0f);
+	// --- LeWahwah effect
+
+	LeWahWah lww;
+	lww.SetSampleRate(pair_data.m_header.sample_rate);
+
+	bool lww_enable = false;
+	bool recompute_lww = true;
+	std::vector<float> lww_out;
+	unsigned lww_skips = 25U;
+	float lww_frequency = 0.6f;
+	float lww_startphase = 0.0f;
+	float lww_feedback = 0.5f;
+	unsigned lww_delay = 20U;
+
+	lww.SetSkipCount(lww_skips);
+
+	// --- LeWahwah effect
+
+	//for fft/ifft
+	bool fft_Enable = false;
+	bool fft_Recompute = true;
+	bool fft_AutoRecompute = false;
+	std::vector<float> mag_sig, output_sig;
+
+	// Final steps for spectrum rendering...
+	bool rs_enable = false;
+
+	const unsigned render_width = 2048;
+	std::vector<float> spectrum_graph(render_width, 0.0f);
 
 	float x_min = pair_data.m_header.sample_rate / static_cast<float>(windowSize);
 	float x_max = pair_data.m_header.sample_rate / 2.0f;
@@ -484,6 +511,49 @@ int main(int argc, char* argv[])
 
 			ImGui::Separator();
 			//end bb filter
+
+			ImGui::Checkbox("Enable FFT/IFFT", &fft_Enable);
+			if (fft_Enable)
+			{
+				//ImGui::Checkbox("Always Recompute On Change", &fft_AutoRecompute);
+
+				ImGui::PlotLines("Entire Waveform", pair_data.m_samples.data(), pair_data.m_samples.size() / 2, 0, "", -1.0f, 1.0f, ImVec2(0, 100), 4);
+
+				if (fft_Recompute)
+				{
+					std::vector<std::complex<float> > temp = ourFFT(pair_data.m_samples);
+					mag_sig.clear();
+					for (const auto& elem : temp)
+					{
+						mag_sig.push_back(sqrt(elem.real() * elem.real() + elem.imag() * elem.imag()));
+					}
+					output_sig = ourIFFT(temp);
+					fft_Recompute = false;
+				}
+
+				{
+					bool dummy_bool = false;
+					ImGui::PlotHistogram("FFT", mag_sig.data(), mag_sig.size() / 2, 0, NULL, 0.0, 500.0f, ImVec2(0, 100));
+					ImGui::PlotLines("IFFT", output_sig.data(), output_sig.size() / 2, 0, "output", -1, 1, ImVec2(0, 100));
+
+
+					if (fft_AutoRecompute)
+						fft_Recompute |= dummy_bool;
+				}
+
+				if (ImGui::Button("Recompute", ImVec2(100, 30)))
+				{
+					fft_Recompute = true;
+				}
+			}
+			ImGui::Separator();
+
+			ImGui::Checkbox("Enable Spectrum View (Raw file)", &rs_enable);
+			if (rs_enable)
+			{
+				ImGui::PlotLines("Spectrum", spectrum_graph.data(), spectrum_graph.size(), 0, "raw data", 0.0f, -60.0f, ImVec2(0, 100));
+			}
+			ImGui::Separator();
 
 				  //// Use functions to generate output
 				  //// FIXME: This is rather awkward because current plot API only pass in indices. We probably want an API passing floats and user provide sample rate/count.

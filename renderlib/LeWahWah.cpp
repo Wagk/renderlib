@@ -75,12 +75,12 @@ bool LeWahWah::IsInit() const
 	return m_IsInit;
 }
 
-void LeWahWah::SetSampleRate(int rate)
+void LeWahWah::SetSampleRate(unsigned rate)
 {
 	m_SampleRate = rate;
 }
 
-int LeWahWah::GetSampleRate() const
+unsigned LeWahWah::GetSampleRate() const
 {
 	return m_SampleRate;
 }
