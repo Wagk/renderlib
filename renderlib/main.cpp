@@ -76,6 +76,20 @@ static void sys_init()
 	//io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
 }
 
+static void FindGraphMinMax(float& min, float& max, float* graph, size_t elemSize)
+{
+	min = FLT_MAX;
+	max = -FLT_MAX;
+
+	for (size_t i = 0; i < elemSize; ++i)
+	{
+		if (min > graph[i])
+			min = graph[i];
+		if (max < graph[i])
+			max = graph[i];
+	}
+}
+
 int main(int argc, char* argv[])
 {
 	std::string load_file;
@@ -234,11 +248,15 @@ int main(int argc, char* argv[])
 	float x_step = (x_max - x_min) / render_width;
 	float x_pos = x_min;
 
+	float spec_min, spec_max;
+
 	for (unsigned i = 0U; i < render_width; ++i)
 	{
 		spectrum_graph[i] = SignalAnalyst::GetProcessedValue(x_pos, x_pos + x_step);
 		x_pos += x_step;
 	}
+
+	FindGraphMinMax(spec_min, spec_max, spectrum_graph.data(), spectrum_graph.size());
 
 	// For changing .wav files
 	std::string prevTxt = load_file;
@@ -349,10 +367,10 @@ int main(int argc, char* argv[])
 					sound_data = tmp_sound_data;
 					pair_data = io::wav::ToSample(sound_data.first);
 
+					// compressor
 					shortvec.clear();
 					shortvec.resize(sound_data.first.m_data.size());
 					std::copy(sound_data.first.m_data.begin(), sound_data.first.m_data.end(), shortvec.begin());
-
 
 					// spectrum
 					SignalAnalyst::SetDataReference(pair_data.m_samples.data(), pair_data.m_samples.size());
@@ -370,6 +388,8 @@ int main(int argc, char* argv[])
 						spectrum_graph[i] = SignalAnalyst::GetProcessedValue(x_pos, x_pos + x_step);
 						x_pos += x_step;
 					}
+
+					FindGraphMinMax(spec_min, spec_max, spectrum_graph.data(), spectrum_graph.size());
 				}
 
 			}
@@ -683,7 +703,7 @@ int main(int argc, char* argv[])
 			ImGui::Checkbox("Enable Spectrum View (Raw file)", &rs_enable);
 			if (rs_enable)
 			{
-				ImGui::PlotLines("Spectrum", spectrum_graph.data(), spectrum_graph.size(), 0, "raw data", 0.0f, -60.0f, ImVec2(0, 100));
+				ImGui::PlotLines("Spectrum", spectrum_graph.data(), spectrum_graph.size(), 0, "raw data", spec_min, spec_max, ImVec2(0, 100));
 			}
 			ImGui::Separator();
 
