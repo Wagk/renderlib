@@ -204,13 +204,14 @@ int main(int argc, char* argv[])
 	lww.SetSampleRate(pair_data.m_header.sample_rate);
 
 	bool lww_enable = false;
-	bool recompute_lww = true;
+	bool lww_autorecompute = false;
+	bool lww_recompute = true;
 	std::vector<float> lww_out;
-	unsigned lww_skips = 25U;
+	int lww_skips = 25;
 	float lww_frequency = 0.6f;
 	float lww_startphase = 0.0f;
 	float lww_feedback = 0.5f;
-	unsigned lww_delay = 20U;
+	int lww_delay = 20;
 
 	lww.SetSkipCount(lww_skips);
 
@@ -241,6 +242,7 @@ int main(int argc, char* argv[])
 
 	// For changing .wav files
 	std::string prevTxt;
+	std::string prevInputTxt;
 
 	// Main loop
 	while (!glfwWindowShouldClose(g_context))
@@ -284,17 +286,34 @@ int main(int argc, char* argv[])
 		ImGui::Begin("Test", &math_window);
 		{
 			/*changes here*/
-			char txtbook[129];
-			int txtbooklen = sizeof(txtbook) - 1;
-
-			memset(txtbook, 0, txtbooklen);
-			strcpy(txtbook, prevTxt.c_str());
-
-			if (ImGui::InputText("Audio File", txtbook, txtbooklen))
 			{
-				if (strcmp(txtbook, "") != 0)
-					prevTxt = txtbook;
+				char txtbook[129];
+				int txtbooklen = sizeof(txtbook) - 1;
 
+				memset(txtbook, 0, txtbooklen);
+				strcpy(txtbook, prevTxt.c_str());
+
+				if (ImGui::InputText("Audio File", txtbook, txtbooklen))
+				{
+					if (strcmp(txtbook, "") != 0)
+						prevTxt = txtbook;
+
+				}
+			}
+
+			{
+				char txtbook[129];
+				int txtbooklen = sizeof(txtbook) - 1;
+
+				memset(txtbook, 0, txtbooklen);
+				strcpy(txtbook, prevInputTxt.c_str());
+
+				if (ImGui::InputText("Input File", txtbook, txtbooklen))
+				{
+					if (strcmp(txtbook, "") != 0)
+						prevInputTxt = txtbook;
+
+				}
 			}
 
 			if (ImGui::Button(playbuttonTxt.c_str(), ImVec2(50, 50)))
@@ -307,8 +326,40 @@ int main(int argc, char* argv[])
 				else
 				{
 					io::wav::PlayWavFile(prevTxt.c_str(), false);
-
 				}
+			}
+
+			if (ImGui::Button("Reload Input file", ImVec2(150, 50)))
+			{
+				auto tmp_sound_data = io::wav::LoadWAV(prevInputTxt);
+				if (tmp_sound_data.second != io::wav::WAV_GOOD)
+				{
+					prevInputTxt = "Error yo!";
+					//return -1;
+				}
+				else
+				{
+					sound_data = tmp_sound_data;
+					pair_data = io::wav::ToSample(sound_data.first);
+
+					// spectrum
+					SignalAnalyst::SetDataReference(pair_data.m_samples.data(), pair_data.m_samples.size());
+					SignalAnalyst::SetDataRate(pair_data.m_header.sample_rate);
+
+					SignalAnalyst::ComputePlot();
+
+					x_min = pair_data.m_header.sample_rate / static_cast<float>(windowSize);
+					x_max = pair_data.m_header.sample_rate / 2.0f;
+					x_step = (x_max - x_min) / render_width;
+					x_pos = x_min;
+
+					for (unsigned i = 0U; i < render_width; ++i)
+					{
+						spectrum_graph[i] = SignalAnalyst::GetProcessedValue(x_pos, x_pos + x_step);
+						x_pos += x_step;
+					}
+				}
+
 			}
 			/*to here*/
 
@@ -527,6 +578,59 @@ int main(int argc, char* argv[])
 
 			ImGui::Separator();
 			//end bb filter
+
+			//start lww
+			ImGui::Checkbox("Enable Le Wah Wah", &lww_enable);
+			if (lww_enable)
+			{
+				ImGui::Checkbox("Always Recompute On Change", &lww_autorecompute);
+
+				bool dummy_bool = false;
+				dummy_bool |= ImGui::SliderInt("Skip Samples", &lww_skips, 0, 100);
+				dummy_bool |= ImGui::SliderFloat("Frequency", &lww_frequency, 0, 5.0f);
+				dummy_bool |= ImGui::SliderFloat("Start Phase", &lww_startphase, 0, M_TAU);
+				dummy_bool |= ImGui::SliderFloat("Feedback", &lww_feedback, 0, 1.0f);
+				dummy_bool |= ImGui::SliderInt("Delay", &lww_delay, 0, 100);
+
+				if (lww_autorecompute)
+					lww_recompute |= dummy_bool;
+
+				if (ImGui::Button("Recompute", ImVec2(100, 30)))
+				{
+					lww_recompute = true;
+				}
+
+				if (lww_recompute)
+				{
+					lww_out.clear();
+
+					lww.SetSkipCount(lww_skips);
+					lww.SetSampleRate(pair_data.m_header.sample_rate);
+					lww.Init(lww_frequency, lww_startphase, lww_feedback, lww_delay);
+
+					for (const auto& sample : pair_data.m_samples)
+					{
+						lww_out.push_back(lww.ProcessOnSample(sample));
+					}
+
+					lww.Deinit();
+
+					lww_recompute = false;
+				}
+
+				ImGui::PlotLines("Le Wah Wah Output", lww_out.data(), lww_out.size(), 0, "output", -1, 1, ImVec2(0, 100));
+
+				if (ImGui::Button("Save To File", ImVec2(100, 30)))
+				{
+					io::wav::sample lww_sample = pair_data;
+					lww_sample.m_samples = lww_out;
+					io::wav::file lww_file = io::wav::ToFile(lww_sample);
+					io::wav::SaveWAV("lww_out.wav", lww_file);
+				}
+			}
+
+			ImGui::Separator();
+			//end lww
 
 			ImGui::Checkbox("Enable FFT/IFFT", &fft_Enable);
 			if (fft_Enable)
