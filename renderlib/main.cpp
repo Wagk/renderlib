@@ -123,10 +123,6 @@ int main(int argc, char* argv[])
 
 	std::vector<float> shortvec(sound_data.first.m_data.size());
 	std::copy(sound_data.first.m_data.begin(), sound_data.first.m_data.end(), shortvec.begin());
-	//for (auto elem : sound_data.first.m_data)
-	//{
-	//	shortvec.push_back(elem);
-	//}
 
 	const unsigned windowSize = 2048;
 
@@ -155,29 +151,41 @@ int main(int argc, char* argv[])
 
 	// for compressor
 	bool compressor_Enable = false;
+	bool compressor_Recompute = true;
+	bool compressor_AutoRecompute = false;
+	
+	const int view_buffer_size = 90;
+	static const float Amplitude = 2.0f;
+	float view_buffer[view_buffer_size] = { 0 };
+	std::vector<float> compressor_result;
+	std::vector<float> sinVec(512);
+	std::vector<float> result_sinVec;
 
 	//for high and low pass
 	bool cutoff_Enable = false;
+	bool cutoff_Recompute = true;
+	bool cutoff_AutoRecompute = false;
 	float cutoffLow = 100.f;
 	float cutoffHigh = 100.f;
 	std::vector<float> lowpass, highpass;
 
-  // --- for biquad filters
-  Biquad::BiquadFilterTypes biquad_current_filter = Biquad::BiquadFilterTypes::LOW_PASS;
-  std::vector<float> biquad_out;
-  float biquad_centerFreq = 440;
-  float biquad_bandwidth = 15;
-  bool biquad_enable = false;
-  bool biquad_autorecompute = false;
-  bool biquad_recompute = true;
+	// --- for biquad filters
+	Biquad::BiquadFilterTypes biquad_current_filter = Biquad::BiquadFilterTypes::LOW_PASS;
+	std::vector<float> biquad_out;
+	float biquad_centerFreq = 440;
+	float biquad_bandwidth = 15;
+	float biquad_dbGain = 40;
+	bool biquad_enable = false;
+	bool biquad_autorecompute = false;
+	bool biquad_recompute = true;
 
-  auto biquad_sound_data = io::wav::LoadWAV("biquad_out.wav");
-  auto biquad_sound_sample = io::wav::ToSample(biquad_sound_data.first);
-  std::vector<float> biquad_sound_float_data(biquad_sound_sample.m_samples.size());
-  std::copy(biquad_sound_sample.m_samples.begin(), biquad_sound_sample.m_samples.end(), biquad_sound_float_data.begin());
-  // --- for biquad filters
+	auto biquad_sound_data = io::wav::LoadWAV("biquad_out.wav");
+	auto biquad_sound_sample = io::wav::ToSample(biquad_sound_data.first);
+	std::vector<float> biquad_sound_float_data(biquad_sound_sample.m_samples.size());
+	std::copy(biquad_sound_sample.m_samples.begin(), biquad_sound_sample.m_samples.end(), biquad_sound_float_data.begin());
+	// --- for biquad filters
 
-	// Final steps for spectrum rendering...
+	  // Final steps for spectrum rendering...
 	const unsigned render_width = 512;
 	std::vector<float> spectrum_graph(512, 0.0f);
 
@@ -275,7 +283,7 @@ int main(int argc, char* argv[])
 			//ImGui::PlotLines("Lines", values, IM_ARRAYSIZE(values), values_offset, "avg 0.0", -1.0f, 1.0f, ImVec2(0, 80));
 			//ImGui::PlotHistogram("Histogram", arr, IM_ARRAYSIZE(arr), 0, NULL, 0.0f, 1.0f, ImVec2(0,80));
 
-			
+
 
 			ImGui::PlotLines("Entire Waveform", pair_data.m_samples.data(), pair_data.m_samples.size() / 2, 0, "", -1.0f, 1.0f, ImVec2(0, 100), 4);
 
@@ -284,36 +292,32 @@ int main(int argc, char* argv[])
 			ImGui::Checkbox("Enable Compressor", &compressor_Enable);
 			if (compressor_Enable)
 			{
-				const int view_buffer_size = 90;
-				float view_buffer[view_buffer_size] = { 0 };
+				if (compressor_Recompute)
+				{
+					for (unsigned i = 0; i < sinVec.size(); ++i)
+					{
+						sinVec[i] = Amplitude * sinf(i * 0.5f) + Amplitude*1.5f * sinf(i * 0.2f);
+					}
+
+					CompressionPacket pkt2(sinVec);
+					result_sinVec = Compressor(pkt2)();
+
+					compressor_Recompute = false;
+				}
+
 				for (int i = 0; i < view_buffer_size; ++i)
 				{
 					view_buffer[i] = pair_data.m_samples[(i + (int)skipval) % pair_data.m_samples.size()];
 				}
 				std::vector<float> HACK_BUFFER(view_buffer, view_buffer + view_buffer_size);
 				CompressionPacket pkt(HACK_BUFFER);
-				//
-				//
-				std::vector<float> result = Compressor(pkt)();
 
-
+				compressor_result = Compressor(pkt)();
 
 				ImGui::PlotLines("Dynamic Waveform", view_buffer, view_buffer_size, 0, "", -1.0f, 1.0f, ImVec2(0, 100), 4);
-				ImGui::PlotLines("Compressed Dynamic Waveform", result.data(), result.size(), 0, "input", -1.0f, 1.0f, ImVec2(0, 100));
+				ImGui::PlotLines("Compressed Dynamic Waveform", compressor_result.data(), compressor_result.size(), 0, "input", -1.0f, 1.0f, ImVec2(0, 100));
 				ImGui::PlotHistogram("File Value Histogram", shortvec.data(), shortvec.size() / 2, 0, NULL, SHRT_MIN, SHRT_MAX, ImVec2(0, 100));
-
-				static const float Amplitude = 2.0f;
-				std::vector<float> sinVec(512);
-				for (unsigned i = 0; i < sinVec.size(); ++i)
-				{
-					sinVec[i] = Amplitude * sinf(i * 0.5f) + Amplitude*1.5f * sinf(i * 0.2f);
-				}
-
 				ImGui::PlotLines("Uncompressed Waveform", sinVec.data(), sinVec.size(), 0, "input", -1.0f, 1.0f, ImVec2(0, 100));
-
-				CompressionPacket pkt2(sinVec);
-				std::vector<float> result_sinVec = Compressor(pkt2)();
-
 				ImGui::PlotLines("Compressed Waveform", result_sinVec.data(), result_sinVec.size(), 0, "input", -1.0f, 1.0f, ImVec2(0, 100));
 				// high low pass filters
 				// Render spectrum
@@ -332,122 +336,145 @@ int main(int argc, char* argv[])
 			ImGui::Checkbox("Enable Low/High Pass Filters", &cutoff_Enable);
 			if (cutoff_Enable)
 			{
+				ImGui::Checkbox("Always Recompute On Change", &cutoff_AutoRecompute);
+
 				ImGui::PlotLines("Entire Waveform", pair_data.m_samples.data(), pair_data.m_samples.size() / 2, 0, "", -1.0f, 1.0f, ImVec2(0, 100), 4);
 
-				lowpass = LowPassFilter(pair_data.m_samples, sound_data.first.m_header.sample_rate, cutoffLow);
-				//fft.do_ifft(lowpass.data(), ifft_output.data());
-				//fft.rescale(ifft_output.data());
-				ImGui::PlotLines("Low", lowpass.data(), pair_data.m_samples.size() / 2, 0, "output", -1, 1, ImVec2(0, 100));
-				ImGui::SliderFloat("Cutoff Low", &cutoffLow, 100, 10000);
+				if (cutoff_Recompute)
+				{
+					lowpass = LowPassFilter(pair_data.m_samples, sound_data.first.m_header.sample_rate, cutoffLow);
+					highpass = HighPassFilter(pair_data.m_samples, sound_data.first.m_header.sample_rate, cutoffHigh);
+					cutoff_Recompute = false;
+				}
 
-				highpass = HighPassFilter(pair_data.m_samples, sound_data.first.m_header.sample_rate, cutoffHigh);
-				ImGui::PlotLines("High", highpass.data(), highpass.size() / 2, 0, "output", -1, 1, ImVec2(0, 100));
-				ImGui::SliderFloat("Cutoff High", &cutoffHigh, 100, 10000);
+
+				{
+					bool dummy_bool = false;
+					ImGui::PlotLines("Low", lowpass.data(), pair_data.m_samples.size() / 2, 0, "output", -1, 1, ImVec2(0, 100));
+					dummy_bool |= ImGui::SliderFloat("Cutoff Low", &cutoffLow, 100, 10000);
+
+					ImGui::PlotLines("High", highpass.data(), highpass.size() / 2, 0, "output", -1, 1, ImVec2(0, 100));
+					dummy_bool |= ImGui::SliderFloat("Cutoff High", &cutoffHigh, 100, 10000);
+
+					if (cutoff_AutoRecompute)
+						cutoff_Recompute |= dummy_bool;
+				}
+
+				if (ImGui::Button("Recompute", ImVec2(100, 30)))
+				{
+					cutoff_Recompute = true;
+				}
+
 				// end high low pass filters
 
 			}
 
-		ImGui::Separator();
-		// begin Biquad Filters
-	  ImGui::Checkbox("Enable Biquad Filters", &biquad_enable);
-	  if (biquad_enable)
-	  {
-		  ImGui::Checkbox("Always Recompute On Change", &biquad_autorecompute);
+			ImGui::Separator();
+			// begin Biquad Filters
+			ImGui::Checkbox("Enable Biquad Filters", &biquad_enable);
+			if (biquad_enable)
+			{
+				ImGui::Checkbox("Always Recompute On Change", &biquad_autorecompute);
 
-		  bool dummy_bool = false;
-		  dummy_bool |= ImGui::SliderFloat("Center Frequency", &biquad_centerFreq, 100, 10000);
-		  dummy_bool |= ImGui::SliderFloat("Bandwidth", &biquad_bandwidth, 0, 100);
-		  dummy_bool |= ImGui::RadioButton("LOW PASS", (int*)&biquad_current_filter, 0);
-		  dummy_bool |= ImGui::RadioButton("HIGH PASS", (int*)&biquad_current_filter, 1);
-		  dummy_bool |= ImGui::RadioButton("BAND PASS", (int*)&biquad_current_filter, 2);
+				bool dummy_bool = false;
+				dummy_bool |= ImGui::SliderFloat("Center Frequency", &biquad_centerFreq, 100, 10000);
+				dummy_bool |= ImGui::SliderFloat("Bandwidth", &biquad_bandwidth, 0, 50);
+				if (biquad_current_filter == Biquad::BiquadFilterTypes::PEAKING_EQ)
+					dummy_bool |= ImGui::SliderFloat("Decibel Gain", &biquad_dbGain, -50, 50);
+				dummy_bool |= ImGui::RadioButton("LOW PASS", (int*)&biquad_current_filter, 0);
+				dummy_bool |= ImGui::RadioButton("HIGH PASS", (int*)&biquad_current_filter, 1);
+				dummy_bool |= ImGui::RadioButton("BAND PASS", (int*)&biquad_current_filter, 2);
+				dummy_bool |= ImGui::RadioButton("NOTCH", (int*)&biquad_current_filter, 3);
+				dummy_bool |= ImGui::RadioButton("ALL PASS", (int*)&biquad_current_filter, 4);
+				dummy_bool |= ImGui::RadioButton("PEAKING EQ", (int*)&biquad_current_filter, 5);
 
-		  if (biquad_autorecompute)
-			  biquad_recompute |= dummy_bool;
+				if (biquad_autorecompute)
+					biquad_recompute |= dummy_bool;
 
-		  if (ImGui::Button("Recompute", ImVec2(100, 30)))
-		  {
-			  biquad_recompute = true;
-		  }
+				if (ImGui::Button("Recompute", ImVec2(100, 30)))
+				{
+					biquad_recompute = true;
+				}
 
-		  if (biquad_recompute)
-		  {
-			  biquad_out.clear();
+				if (biquad_recompute)
+				{
+					biquad_out.clear();
 
-			  Biquad::BiquadObject obj = Biquad::GetBiquadObject(biquad_current_filter, biquad_centerFreq,
-				  sound_data.first.m_header.sample_rate, biquad_bandwidth);
-			  for (const auto& sample : pair_data.m_samples)
-			  {
-				  biquad_out.push_back(Biquad::PerformBiquadOnSample(sample, obj));
-			  }
+					Biquad::BiquadObject obj = Biquad::GetBiquadObject(biquad_current_filter, biquad_dbGain, biquad_centerFreq,
+						sound_data.first.m_header.sample_rate, biquad_bandwidth);
+					for (const auto& sample : pair_data.m_samples)
+					{
+						biquad_out.push_back(Biquad::PerformBiquadOnSample(sample, obj));
+					}
 
-			  ImGui::PlotLines("Biquad Filter Output", biquad_out.data(), biquad_out.size() / 2, 0, "output", -1, 1, ImVec2(0, 100));
+					biquad_recompute = false;
+				}
 
-			  biquad_recompute = false;
-		  }
+				ImGui::PlotLines("Biquad Filter Output", biquad_out.data(), biquad_out.size() / 2, 0, "output", -1, 1, ImVec2(0, 100));
 
-		  if (ImGui::Button("Save To File", ImVec2(100, 30)))
-		  {
-			  io::wav::sample biquad_sample = pair_data;
-			  biquad_sample.m_samples = biquad_out;
-			  io::wav::file biquad_file = io::wav::ToFile(biquad_sample);
-			  io::wav::SaveWAV("biquad_out.wav", biquad_file);
+				if (ImGui::Button("Save To File", ImVec2(100, 30)))
+				{
+					io::wav::sample biquad_sample = pair_data;
+					biquad_sample.m_samples = biquad_out;
+					io::wav::file biquad_file = io::wav::ToFile(biquad_sample);
+					io::wav::SaveWAV("biquad_out.wav", biquad_file);
 
-			  biquad_sound_data = io::wav::LoadWAV("biquad_out.wav");
-			  io::wav::sample inputsample = io::wav::ToSample(biquad_sound_data.first);
-			  biquad_sound_float_data.resize(inputsample.m_samples.size());
-			  std::copy(inputsample.m_samples.begin(), inputsample.m_samples.end(), biquad_sound_float_data.begin());
-		  }
+					biquad_sound_data = io::wav::LoadWAV("biquad_out.wav");
+					io::wav::sample inputsample = io::wav::ToSample(biquad_sound_data.first);
+					biquad_sound_float_data.resize(inputsample.m_samples.size());
+					std::copy(inputsample.m_samples.begin(), inputsample.m_samples.end(), biquad_sound_float_data.begin());
+				}
 
-		  ImGui::PlotLines("Biquad Out Waveform", biquad_sound_float_data.data(), biquad_sound_float_data.size() / 2, 0, "", -1.f, 1.f, ImVec2(0, 100), 4);
+				ImGui::PlotLines("Biquad Out Waveform", biquad_sound_float_data.data(), biquad_sound_float_data.size() / 2, 0, "", -1.f, 1.f, ImVec2(0, 100), 4);
 
-	  }
+			}
 
-	  ImGui::Separator();
-      // end Biquad Filters
+			ImGui::Separator();
+			// end Biquad Filters
 
-			//// Use functions to generate output
-			//// FIXME: This is rather awkward because current plot API only pass in indices. We probably want an API passing floats and user provide sample rate/count.
-			//struct Funcs
-			//{
-			//	static float Sin(void*, int i) { return sinf(i * 0.1f); }
-			//	static float Saw(void*, int i) { return (i & 1) ? 1.0f : 0.0f; }
-			//};
-			//static int func_type = 0, display_count = 70;
-			//ImGui::Separator();
+				  //// Use functions to generate output
+				  //// FIXME: This is rather awkward because current plot API only pass in indices. We probably want an API passing floats and user provide sample rate/count.
+				  //struct Funcs
+				  //{
+				  //	static float Sin(void*, int i) { return sinf(i * 0.1f); }
+				  //	static float Saw(void*, int i) { return (i & 1) ? 1.0f : 0.0f; }
+				  //};
+				  //static int func_type = 0, display_count = 70;
+				  //ImGui::Separator();
 
-			//ImGui::PushItemWidth(100);
-			//{
-			//	ImGui::Combo("func", &func_type, "Sin\0Saw\0");
-			//}
-			//ImGui::PopItemWidth();
+				  //ImGui::PushItemWidth(100);
+				  //{
+				  //	ImGui::Combo("func", &func_type, "Sin\0Saw\0");
+				  //}
+				  //ImGui::PopItemWidth();
 
-			//ImGui::SameLine();
+				  //ImGui::SameLine();
 
-			////ImGui::SliderInt("Sample count", &display_count, 1, 500);
-			//float(*func)(void*, int) = (func_type == 0) ? Funcs::Sin : Funcs::Saw;
-			////ImGui::PlotLines("Lines", func, NULL, display_count, 0, NULL, -1.0f, 1.0f, ImVec2(0,80));
-			////ImGui::PlotHistogram("Histogram", func, NULL, display_count, 0, NULL, -1.0f, 1.0f, ImVec2(0,80));
+				  ////ImGui::SliderInt("Sample count", &display_count, 1, 500);
+				  //float(*func)(void*, int) = (func_type == 0) ? Funcs::Sin : Funcs::Saw;
+				  ////ImGui::PlotLines("Lines", func, NULL, display_count, 0, NULL, -1.0f, 1.0f, ImVec2(0,80));
+				  ////ImGui::PlotHistogram("Histogram", func, NULL, display_count, 0, NULL, -1.0f, 1.0f, ImVec2(0,80));
 
-			//ImGui::Separator();
+				  //ImGui::Separator();
 
-			//// Animate a simple progress bar
-			//static float progress = 0.0f, progress_dir = 1.0f;
-			//if (animate)
-			//{
-			//	progress += progress_dir * 0.4f * ImGui::GetIO().DeltaTime;
-			//	if (progress >= +1.1f) { progress = +1.1f; progress_dir *= -1.0f; }
-			//	if (progress <= -0.1f) { progress = -0.1f; progress_dir *= -1.0f; }
-			//}
+				  //// Animate a simple progress bar
+				  //static float progress = 0.0f, progress_dir = 1.0f;
+				  //if (animate)
+				  //{
+				  //	progress += progress_dir * 0.4f * ImGui::GetIO().DeltaTime;
+				  //	if (progress >= +1.1f) { progress = +1.1f; progress_dir *= -1.0f; }
+				  //	if (progress <= -0.1f) { progress = -0.1f; progress_dir *= -1.0f; }
+				  //}
 
-			//// Typically we would use ImVec2(-1.0f,0.0f) to use all available width, or ImVec2(width,0.0f) for a specified width. ImVec2(0.0f,0.0f) uses ItemWidth.
-			////ImGui::ProgressBar(progress, ImVec2(0.0f,0.0f));
-			////ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
-			////ImGui::Text("Progress Bar");
+				  //// Typically we would use ImVec2(-1.0f,0.0f) to use all available width, or ImVec2(width,0.0f) for a specified width. ImVec2(0.0f,0.0f) uses ItemWidth.
+				  ////ImGui::ProgressBar(progress, ImVec2(0.0f,0.0f));
+				  ////ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
+				  ////ImGui::Text("Progress Bar");
 
-			//float progress_saturated = (progress < 0.0f) ? 0.0f : (progress > 1.0f) ? 1.0f : progress;
-			//char buf[32];
-			//sprintf(buf, "%d/%d", (int)(progress_saturated * 1753), 1753);
-			////ImGui::ProgressBar(progress, ImVec2(0.f,0.f), buf);
+				  //float progress_saturated = (progress < 0.0f) ? 0.0f : (progress > 1.0f) ? 1.0f : progress;
+				  //char buf[32];
+				  //sprintf(buf, "%d/%d", (int)(progress_saturated * 1753), 1753);
+				  ////ImGui::ProgressBar(progress, ImVec2(0.f,0.f), buf);
 		}
 		ImGui::End();
 
