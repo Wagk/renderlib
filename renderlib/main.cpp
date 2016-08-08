@@ -31,6 +31,7 @@
 #include "LowHighPassFilter.h"
 #include "Compressor.h"
 #include "BiquadFilter.h"
+#include "BassBoost.h"
 #include "our_fft.h"
 
 #define IM_ARRAYSIZE(_ARR)  ((int)(sizeof(_ARR)/sizeof(*_ARR)))
@@ -184,6 +185,17 @@ int main(int argc, char* argv[])
 	std::vector<float> biquad_sound_float_data(biquad_sound_sample.m_samples.size());
 	std::copy(biquad_sound_sample.m_samples.begin(), biquad_sound_sample.m_samples.end(), biquad_sound_float_data.begin());
 	// --- for biquad filters
+
+	//-- for bass boost filter
+
+	bool bb_enable = false;
+	bool recompute_bb = true;
+	std::vector<float> bb_out;
+	float bb_selectivity = 140.f;
+	float bb_gain2 = 0.f;
+	float bb_ratio = 0.f;
+
+	//-- for bass boost filter
 
 	  // Final steps for spectrum rendering...
 	const unsigned render_width = 512;
@@ -431,6 +443,47 @@ int main(int argc, char* argv[])
 
 			ImGui::Separator();
 			// end Biquad Filters
+
+			//start bb filter
+			ImGui::Checkbox("Enable Volume Filters", &bb_enable);
+			if (bb_enable)
+			{
+				if (recompute_bb)
+				{
+					bb_out.clear();
+					for (const auto& sample : pair_data.m_samples)
+					{
+						bb_out.push_back(BassBoost::BassBoostFunc(sample, bb_selectivity, bb_gain2, bb_ratio));
+					}
+					recompute_bb = false;
+				}
+
+
+				bool dummy_bool = false;
+				//dummy_bool |= ImGui::SliderFloat("Selectivity", &bb_selectivity, 0.0, 200.0);
+				dummy_bool |= ImGui::SliderFloat("Boost", &bb_gain2, 0, 10.0f);
+				dummy_bool |= ImGui::SliderFloat("Cap", &bb_ratio, 0, 1.0);
+
+				recompute_bb |= dummy_bool;
+
+
+
+				ImGui::PlotLines("Volume Filter Output", bb_out.data(), bb_out.size() / 2, 0, "output", -1, 1, ImVec2(0, 100));
+
+
+				if (ImGui::Button("Save To File", ImVec2(100, 30)))
+				{
+					io::wav::sample bb_sample = pair_data;
+					bb_sample.m_samples = bb_out;
+					io::wav::file bb_file = io::wav::ToFile(bb_sample);
+					io::wav::SaveWAV("bb_out.wav", bb_file);
+
+
+				}
+			}
+
+			ImGui::Separator();
+			//end bb filter
 
 				  //// Use functions to generate output
 				  //// FIXME: This is rather awkward because current plot API only pass in indices. We probably want an API passing floats and user provide sample rate/count.

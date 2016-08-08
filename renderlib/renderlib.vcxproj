@@ -69,6 +69,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="BassBoost.cpp" />
     <ClCompile Include="BiquadFilter.cpp" />
     <ClCompile Include="Compressor.cpp" />
     <ClCompile Include="exp_fft_impl.cpp" />
@@ -84,6 +85,7 @@
     <ClCompile Include="wav_loader.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="BassBoost.h" />
     <ClInclude Include="BiquadFilter.h" />
     <ClInclude Include="Compressor.h" />
     <ClInclude Include="exp_fft_impl.h" />
