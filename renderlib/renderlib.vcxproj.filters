@@ -51,6 +51,9 @@
     <ClCompile Include="BiquadFilter.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="LeWahWah.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="GLFW\glfw3.h">
@@ -111,6 +114,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="BiquadFilter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LeWahWah.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

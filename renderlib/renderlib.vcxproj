@@ -77,6 +77,7 @@
     <ClCompile Include="imgui\imgui_demo.cpp" />
     <ClCompile Include="imgui\imgui_draw.cpp" />
     <ClCompile Include="imgui_impl_glfw_gl3.cpp" />
+    <ClCompile Include="LeWahWah.cpp" />
     <ClCompile Include="LowHighPassFilter.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="our_fft.cpp" />
@@ -100,6 +101,7 @@
     <ClInclude Include="imgui\stb_textedit.h" />
     <ClInclude Include="imgui\stb_truetype.h" />
     <ClInclude Include="imgui_impl_glfw_gl3.h" />
+    <ClInclude Include="LeWahWah.h" />
     <ClInclude Include="LowHighPassFilter.h" />
     <ClInclude Include="our_fft.h" />
     <ClInclude Include="wav_loader.h" />
