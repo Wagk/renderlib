@@ -48,6 +48,9 @@
     <ClCompile Include="our_fft.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="BiquadFilter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="GLFW\glfw3.h">
@@ -105,6 +108,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="our_fft.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="BiquadFilter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

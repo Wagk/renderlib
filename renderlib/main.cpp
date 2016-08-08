@@ -30,6 +30,7 @@
 #include "fft_impl.h"
 #include "LowHighPassFilter.h"
 #include "Compressor.h"
+#include "BiquadFilter.h"
 #include "our_fft.h"
 
 #define IM_ARRAYSIZE(_ARR)  ((int)(sizeof(_ARR)/sizeof(*_ARR)))
@@ -100,31 +101,32 @@ int main(int argc, char* argv[])
 	}
 	else
 	{
-		auto sample = io::wav::ToSample(sound_data.first);
-		auto wavfile = io::wav::ToFile(sample);
-		io::wav::SaveWAV(save_file, wavfile);
-
-
-		auto compress_sample = sample;
-
-		CompressionPacket sample_packet(compress_sample.m_samples);
-		compress_sample.m_samples = Compressor(sample_packet)();
-		wavfile = io::wav::ToFile(compress_sample);
-		io::wav::SaveWAV("compress.wav", wavfile);
+		//auto sample = io::wav::ToSample(sound_data.first);
+		//auto wavfile = io::wav::ToFile(sample);
+		//io::wav::SaveWAV(save_file, wavfile);
+		//
+		//
+		//auto compress_sample = sample;
+		//
+		//CompressionPacket sample_packet(compress_sample.m_samples);
+		//compress_sample.m_samples = Compressor(sample_packet)();
+		//wavfile = io::wav::ToFile(compress_sample);
+		//io::wav::SaveWAV("compress.wav", wavfile);
 	}
 	auto pair_data = io::wav::ToSample(sound_data.first);
 
-	auto sin_data = pair_data;
-	for (size_t i = 0; i < sin_data.m_samples.size(); ++i)
-	{
-		sin_data.m_samples[i] = std::sin(i);
-	}
+	//auto sin_data = pair_data;
+	//for (size_t i = 0; i < sin_data.m_samples.size(); ++i)
+	//{
+	//	sin_data.m_samples[i] = std::sin(i);
+	//}
 
-	std::vector<float> shortvec;
-	for (auto elem : sound_data.first.m_data)
-	{
-		shortvec.push_back(elem);
-	}
+	std::vector<float> shortvec(sound_data.first.m_data.size());
+	std::copy(sound_data.first.m_data.begin(), sound_data.first.m_data.end(), shortvec.begin());
+	//for (auto elem : sound_data.first.m_data)
+	//{
+	//	shortvec.push_back(elem);
+	//}
 
 	const unsigned windowSize = 2048;
 
@@ -151,12 +153,29 @@ int main(int argc, char* argv[])
 	float time_prev = 0.f;
 	float time_now = 0.f;
 
+	// for compressor
+	bool compressor_Enable = false;
 
 	//for high and low pass
+	bool cutoff_Enable = false;
 	float cutoffLow = 100.f;
 	float cutoffHigh = 100.f;
 	std::vector<float> lowpass, highpass;
 
+  // --- for biquad filters
+  Biquad::BiquadFilterTypes biquad_current_filter = Biquad::BiquadFilterTypes::LOW_PASS;
+  std::vector<float> biquad_out;
+  float biquad_centerFreq = 440;
+  float biquad_bandwidth = 15;
+  bool biquad_enable = false;
+  bool biquad_autorecompute = false;
+  bool biquad_recompute = true;
+
+  auto biquad_sound_data = io::wav::LoadWAV("biquad_out.wav");
+  auto biquad_sound_sample = io::wav::ToSample(biquad_sound_data.first);
+  std::vector<float> biquad_sound_float_data(biquad_sound_sample.m_samples.size());
+  std::copy(biquad_sound_sample.m_samples.begin(), biquad_sound_sample.m_samples.end(), biquad_sound_float_data.begin());
+  // --- for biquad filters
 
 	// Final steps for spectrum rendering...
 	const unsigned render_width = 512;
@@ -260,41 +279,46 @@ int main(int argc, char* argv[])
 
 			ImGui::PlotLines("Entire Waveform", pair_data.m_samples.data(), pair_data.m_samples.size() / 2, 0, "", -1.0f, 1.0f, ImVec2(0, 100), 4);
 
-			const int view_buffer_size = 90;
-			float view_buffer[view_buffer_size] = { 0 };
-			for (int i = 0; i < view_buffer_size; ++i)
+
+			ImGui::Separator();
+			ImGui::Checkbox("Enable Compressor", &compressor_Enable);
+			if (compressor_Enable)
 			{
-				view_buffer[i] = pair_data.m_samples[(i + (int)skipval) % pair_data.m_samples.size()];
-			} 
-			std::vector<float> HACK_BUFFER(view_buffer, view_buffer + view_buffer_size);
-			CompressionPacket pkt(HACK_BUFFER);
-			//
-			//
-			std::vector<float> result = Compressor(pkt)();
+				const int view_buffer_size = 90;
+				float view_buffer[view_buffer_size] = { 0 };
+				for (int i = 0; i < view_buffer_size; ++i)
+				{
+					view_buffer[i] = pair_data.m_samples[(i + (int)skipval) % pair_data.m_samples.size()];
+				}
+				std::vector<float> HACK_BUFFER(view_buffer, view_buffer + view_buffer_size);
+				CompressionPacket pkt(HACK_BUFFER);
+				//
+				//
+				std::vector<float> result = Compressor(pkt)();
 
 
 
-			ImGui::PlotLines("Dynamic Waveform", view_buffer, view_buffer_size, 0, "", -1.0f, 1.0f, ImVec2(0, 100), 4);
-			ImGui::PlotLines("Compressed Dynamic Waveform", result.data(), result.size(), 0, "input", -1.0f, 1.0f, ImVec2(0, 100));
-			ImGui::PlotHistogram("File Value Histogram", shortvec.data(), shortvec.size() / 2, 0, NULL, SHRT_MIN, SHRT_MAX, ImVec2(0, 100));
+				ImGui::PlotLines("Dynamic Waveform", view_buffer, view_buffer_size, 0, "", -1.0f, 1.0f, ImVec2(0, 100), 4);
+				ImGui::PlotLines("Compressed Dynamic Waveform", result.data(), result.size(), 0, "input", -1.0f, 1.0f, ImVec2(0, 100));
+				ImGui::PlotHistogram("File Value Histogram", shortvec.data(), shortvec.size() / 2, 0, NULL, SHRT_MIN, SHRT_MAX, ImVec2(0, 100));
 
-			static const float Amplitude = 2.0f;
-			std::vector<float> sinVec(512);
-			for (unsigned i = 0; i < sinVec.size(); ++i)
-			{
-				sinVec[i] = Amplitude * sinf(i * 0.5f) + Amplitude*1.5f * sinf(i * 0.2f);
+				static const float Amplitude = 2.0f;
+				std::vector<float> sinVec(512);
+				for (unsigned i = 0; i < sinVec.size(); ++i)
+				{
+					sinVec[i] = Amplitude * sinf(i * 0.5f) + Amplitude*1.5f * sinf(i * 0.2f);
+				}
+
+				ImGui::PlotLines("Uncompressed Waveform", sinVec.data(), sinVec.size(), 0, "input", -1.0f, 1.0f, ImVec2(0, 100));
+
+				CompressionPacket pkt2(sinVec);
+				std::vector<float> result_sinVec = Compressor(pkt2)();
+
+				ImGui::PlotLines("Compressed Waveform", result_sinVec.data(), result_sinVec.size(), 0, "input", -1.0f, 1.0f, ImVec2(0, 100));
+				// high low pass filters
+				// Render spectrum
+				ImGui::PlotLines("Spectrum", spectrum_graph.data(), spectrum_graph.size(), 0, "file data", -46.0f, -10.0f, ImVec2(0, 100));
 			}
-
-			ImGui::PlotLines("Uncompressed Waveform", sinVec.data(), sinVec.size(), 0, "input", -1.0f, 1.0f, ImVec2(0, 100));
-
-			CompressionPacket pkt2(sinVec);
-			std::vector<float> result_sinVec = Compressor(pkt2)();
-
-			ImGui::PlotLines("Compressed Waveform", result_sinVec.data(), result_sinVec.size(), 0, "input", -1.0f, 1.0f, ImVec2(0, 100));
-			// high low pass filters
-			// Render spectrum
-			ImGui::PlotLines("Spectrum", spectrum_graph.data(), spectrum_graph.size(), 0, "file data", -46.0f, -10.0f, ImVec2(0, 100));
-
 			// Use functions to generate output
 			// FIXME: This is rather awkward because current plot API only pass in indices. We probably want an API passing floats and user provide sample rate/count.
 			struct Funcs
@@ -303,21 +327,83 @@ int main(int argc, char* argv[])
 				static float Saw(void*, int i) { return (i & 1) ? 1.0f : 0.0f; }
 			};
 			static int func_type = 0, display_count = 70;
+
 			ImGui::Separator();
-			ImGui::PlotLines("Entire Waveform", pair_data.m_samples.data(), pair_data.m_samples.size() / 2, 0, "", -1.0f, 1.0f, ImVec2(0, 100), 4);
+			ImGui::Checkbox("Enable Low/High Pass Filters", &cutoff_Enable);
+			if (cutoff_Enable)
+			{
+				ImGui::PlotLines("Entire Waveform", pair_data.m_samples.data(), pair_data.m_samples.size() / 2, 0, "", -1.0f, 1.0f, ImVec2(0, 100), 4);
 
-			lowpass = LowPassFilter(pair_data.m_samples, sound_data.first.m_header.sample_rate, cutoffLow);
-			//fft.do_ifft(lowpass.data(), ifft_output.data());
-			//fft.rescale(ifft_output.data());
-			ImGui::PlotLines("Low", lowpass.data(), pair_data.m_samples.size() / 2, 0, "output", -1, 1, ImVec2(0, 100));
-			ImGui::SliderFloat("Cutoff Low", &cutoffLow, 100, 10000);
+				lowpass = LowPassFilter(pair_data.m_samples, sound_data.first.m_header.sample_rate, cutoffLow);
+				//fft.do_ifft(lowpass.data(), ifft_output.data());
+				//fft.rescale(ifft_output.data());
+				ImGui::PlotLines("Low", lowpass.data(), pair_data.m_samples.size() / 2, 0, "output", -1, 1, ImVec2(0, 100));
+				ImGui::SliderFloat("Cutoff Low", &cutoffLow, 100, 10000);
 
-			highpass = HighPassFilter(pair_data.m_samples, sound_data.first.m_header.sample_rate, cutoffHigh);
-			ImGui::PlotLines("High", highpass.data(), highpass.size() / 2, 0, "output", -1, 1, ImVec2(0, 100));
-			ImGui::SliderFloat("Cutoff High", &cutoffHigh, 100, 10000);
-			ImGui::Separator();
-			// end high low pass filters
+				highpass = HighPassFilter(pair_data.m_samples, sound_data.first.m_header.sample_rate, cutoffHigh);
+				ImGui::PlotLines("High", highpass.data(), highpass.size() / 2, 0, "output", -1, 1, ImVec2(0, 100));
+				ImGui::SliderFloat("Cutoff High", &cutoffHigh, 100, 10000);
+				// end high low pass filters
 
+			}
+
+		ImGui::Separator();
+		// begin Biquad Filters
+	  ImGui::Checkbox("Enable Biquad Filters", &biquad_enable);
+	  if (biquad_enable)
+	  {
+		  ImGui::Checkbox("Always Recompute On Change", &biquad_autorecompute);
+
+		  bool dummy_bool = false;
+		  dummy_bool |= ImGui::SliderFloat("Center Frequency", &biquad_centerFreq, 100, 10000);
+		  dummy_bool |= ImGui::SliderFloat("Bandwidth", &biquad_bandwidth, 0, 100);
+		  dummy_bool |= ImGui::RadioButton("LOW PASS", (int*)&biquad_current_filter, 0);
+		  dummy_bool |= ImGui::RadioButton("HIGH PASS", (int*)&biquad_current_filter, 1);
+		  dummy_bool |= ImGui::RadioButton("BAND PASS", (int*)&biquad_current_filter, 2);
+
+		  if (biquad_autorecompute)
+			  biquad_recompute |= dummy_bool;
+
+		  if (ImGui::Button("Recompute", ImVec2(100, 30)))
+		  {
+			  biquad_recompute = true;
+		  }
+
+		  if (biquad_recompute)
+		  {
+			  biquad_out.clear();
+
+			  Biquad::BiquadObject obj = Biquad::GetBiquadObject(biquad_current_filter, biquad_centerFreq,
+				  sound_data.first.m_header.sample_rate, biquad_bandwidth);
+			  for (const auto& sample : pair_data.m_samples)
+			  {
+				  biquad_out.push_back(Biquad::PerformBiquadOnSample(sample, obj));
+			  }
+
+			  ImGui::PlotLines("Biquad Filter Output", biquad_out.data(), biquad_out.size() / 2, 0, "output", -1, 1, ImVec2(0, 100));
+
+			  biquad_recompute = false;
+		  }
+
+		  if (ImGui::Button("Save To File", ImVec2(100, 30)))
+		  {
+			  io::wav::sample biquad_sample = pair_data;
+			  biquad_sample.m_samples = biquad_out;
+			  io::wav::file biquad_file = io::wav::ToFile(biquad_sample);
+			  io::wav::SaveWAV("biquad_out.wav", biquad_file);
+
+			  biquad_sound_data = io::wav::LoadWAV("biquad_out.wav");
+			  io::wav::sample inputsample = io::wav::ToSample(biquad_sound_data.first);
+			  biquad_sound_float_data.resize(inputsample.m_samples.size());
+			  std::copy(inputsample.m_samples.begin(), inputsample.m_samples.end(), biquad_sound_float_data.begin());
+		  }
+
+		  ImGui::PlotLines("Biquad Out Waveform", biquad_sound_float_data.data(), biquad_sound_float_data.size() / 2, 0, "", -1.f, 1.f, ImVec2(0, 100), 4);
+
+	  }
+
+	  ImGui::Separator();
+      // end Biquad Filters
 
 			//// Use functions to generate output
 			//// FIXME: This is rather awkward because current plot API only pass in indices. We probably want an API passing floats and user provide sample rate/count.
