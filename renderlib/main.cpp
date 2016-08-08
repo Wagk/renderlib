@@ -239,6 +239,9 @@ int main(int argc, char* argv[])
 		x_pos += x_step;
 	}
 
+	// For changing .wav files
+	std::string prevTxt;
+
 	// Main loop
 	while (!glfwWindowShouldClose(g_context))
 	{
@@ -281,16 +284,29 @@ int main(int argc, char* argv[])
 		ImGui::Begin("Test", &math_window);
 		{
 			/*changes here*/
+			char txtbook[129];
+			int txtbooklen = sizeof(txtbook) - 1;
+
+			memset(txtbook, 0, txtbooklen);
+			strcpy(txtbook, prevTxt.c_str());
+
+			if (ImGui::InputText("Audio File", txtbook, txtbooklen))
+			{
+				if (strcmp(txtbook, "") != 0)
+					prevTxt = txtbook;
+
+			}
+
 			if (ImGui::Button(playbuttonTxt.c_str(), ImVec2(50, 50)))
 			{
 				if (playbuttonTxt == "play")
 				{
-					io::wav::PlayWavFile("test.wav", true);
+					io::wav::PlayWavFile(prevTxt.c_str(), true);
 
 				}
 				else
 				{
-					io::wav::PlayWavFile("test.wav", false);
+					io::wav::PlayWavFile(prevTxt.c_str(), false);
 
 				}
 			}
