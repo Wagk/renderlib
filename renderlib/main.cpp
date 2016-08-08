@@ -342,6 +342,11 @@ int main(int argc, char* argv[])
 					sound_data = tmp_sound_data;
 					pair_data = io::wav::ToSample(sound_data.first);
 
+					shortvec.clear();
+					shortvec.resize(sound_data.first.m_data.size());
+					std::copy(sound_data.first.m_data.begin(), sound_data.first.m_data.end(), shortvec.begin());
+
+
 					// spectrum
 					SignalAnalyst::SetDataReference(pair_data.m_samples.data(), pair_data.m_samples.size());
 					SignalAnalyst::SetDataRate(pair_data.m_header.sample_rate);
