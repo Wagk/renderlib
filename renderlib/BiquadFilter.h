@@ -2,23 +2,26 @@
 
 namespace Biquad
 {
-  using sample_type = double;
+	using sample_type = double;
 
-  struct BiquadObject
-  {
-    sample_type a0, a1, a2, a3, a4;
-    sample_type x1, x2, y1, y2;
-  };
+	struct BiquadObject
+	{
+		sample_type a0, a1, a2, a3, a4;
+		sample_type x1, x2, y1, y2;
+	};
 
-  enum BiquadFilterTypes
-  {
-    LOW_PASS,
-    HIGH_PASS,
-    BAND_PASS
-  };
+	enum BiquadFilterTypes
+	{
+		LOW_PASS,
+		HIGH_PASS,
+		BAND_PASS,
+		NOTCH,
+		ALL_PASS,
+		PEAKING_EQ
+	};
 
-  sample_type PerformBiquadOnSample(sample_type sample, BiquadObject& obj);
+	sample_type PerformBiquadOnSample(sample_type sample, BiquadObject& obj);
 
-  BiquadObject GetBiquadObject(BiquadFilterTypes type, sample_type freq, 
-                                sample_type sampleRate, sample_type bandwidth);
+	BiquadObject GetBiquadObject(BiquadFilterTypes type, sample_type dbGain, sample_type freq,
+		sample_type sampleRate, sample_type bandwidth);
 }
